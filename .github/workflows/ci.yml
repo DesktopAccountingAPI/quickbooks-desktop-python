@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Python ${{ matrix.python }} (${{ matrix.os }}${{ matrix.resolution && ', lowest dependencies' || '' }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - os: windows-latest
+            python: "3.14"
+          # The oldest httpx and typing_extensions the package allows.
+          - os: ubuntu-latest
+            python: "3.9"
+            resolution: lowest-direct
+    env:
+      # `mise run check` creates .venv with this interpreter (uv downloads it if needed).
+      UV_PYTHON: ${{ matrix.python }}
+      UV_RESOLUTION: ${{ matrix.resolution || 'highest' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+      - run: mise run check

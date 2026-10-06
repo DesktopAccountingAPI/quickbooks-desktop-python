@@ -1,0 +1,49 @@
+name: Publish
+
+# Releases the package to PyPI. Pushing the tag v<version> (the version in pyproject.toml)
+# starts it; workflow_dispatch re-runs a release for an existing tag. Re-runs are safe: an
+# already published version is not uploaded again, only verified.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release, for example v0.1.0 (default: the selected ref)"
+        required: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: release
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: jdx/mise-action@v5
+      - name: Check the tag matches the package version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -n 1)
+          if [ "$RELEASE_TAG" != "v$version" ]; then
+            echo "::error::Tag $RELEASE_TAG does not match the package version $version (expected v$version)"
+            exit 1
+          fi
+      - name: Run all checks
+        run: mise run check
+      - name: Build, publish and verify
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: mise exec -- python scripts/publish.py --tag "$RELEASE_TAG"

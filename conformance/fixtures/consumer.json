@@ -1,0 +1,176 @@
+{
+  "description": "Scenarios for the released-package consumer check: the examples' quickstart against the mock server.",
+  "apiKey": "sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+  "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+  "scenarios": [
+    {
+      "name": "quickstart",
+      "description": "examples/<lang>/quickstart: health check, then the first page of invoices with limit 10.",
+      "call": {
+        "op": "examples.quickstart",
+        "kind": "program"
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/health-check",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb"
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01h"
+            },
+            "body": {
+              "status": "ok",
+              "duration": 812,
+              "quickbooks": {
+                "product": null,
+                "qbxmlVersion": null,
+                "companyName": null
+              }
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "query": {
+              "limit": [
+                "10"
+              ]
+            },
+            "headers": {
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb"
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z"
+            },
+            "body": {
+              "objectType": "list",
+              "url": "/v1/quickbooks-desktop/invoices",
+              "data": [
+                {
+                  "id": "1-1700000000",
+                  "objectType": "qbd_invoice",
+                  "createdAt": "2026-10-05T09:14:03-07:00",
+                  "updatedAt": "2026-10-05T09:11:03-07:00",
+                  "revisionNumber": "1700000001",
+                  "transactionNumber": null,
+                  "customer": null,
+                  "class": null,
+                  "receivablesAccount": null,
+                  "documentTemplate": null,
+                  "transactionDate": null,
+                  "refNumber": "INV-1001",
+                  "billingAddress": null,
+                  "shippingAddress": null,
+                  "isPending": null,
+                  "isFinanceCharge": null,
+                  "purchaseOrderNumber": null,
+                  "terms": null,
+                  "dueDate": null,
+                  "salesRepresentative": null,
+                  "shipmentOrigin": null,
+                  "shippingDate": null,
+                  "shippingMethod": null,
+                  "subtotal": "105.50",
+                  "salesTaxItem": null,
+                  "salesTaxPercentage": null,
+                  "salesTaxTotal": null,
+                  "appliedAmount": null,
+                  "balanceRemaining": null,
+                  "currency": null,
+                  "exchangeRate": null,
+                  "balanceRemainingInHomeCurrency": null,
+                  "memo": null,
+                  "isPaid": null,
+                  "customerMessage": null,
+                  "isQueuedForPrint": null,
+                  "isQueuedForEmail": null,
+                  "salesTaxCode": null,
+                  "suggestedDiscountAmount": null,
+                  "suggestedDiscountDate": null,
+                  "otherCustomField": null,
+                  "externalId": null,
+                  "linkedTransactions": [],
+                  "lines": [],
+                  "lineGroups": [],
+                  "customFields": []
+                },
+                {
+                  "id": "2-1700000000",
+                  "objectType": "qbd_invoice",
+                  "createdAt": "2026-10-05T09:14:03-07:00",
+                  "updatedAt": "2026-10-05T09:12:03-07:00",
+                  "revisionNumber": "1700000002",
+                  "transactionNumber": null,
+                  "customer": null,
+                  "class": null,
+                  "receivablesAccount": null,
+                  "documentTemplate": null,
+                  "transactionDate": null,
+                  "refNumber": "INV-1002",
+                  "billingAddress": null,
+                  "shippingAddress": null,
+                  "isPending": null,
+                  "isFinanceCharge": null,
+                  "purchaseOrderNumber": null,
+                  "terms": null,
+                  "dueDate": null,
+                  "salesRepresentative": null,
+                  "shipmentOrigin": null,
+                  "shippingDate": null,
+                  "shippingMethod": null,
+                  "subtotal": "105.50",
+                  "salesTaxItem": null,
+                  "salesTaxPercentage": null,
+                  "salesTaxTotal": null,
+                  "appliedAmount": null,
+                  "balanceRemaining": null,
+                  "currency": null,
+                  "exchangeRate": null,
+                  "balanceRemainingInHomeCurrency": null,
+                  "memo": null,
+                  "isPaid": null,
+                  "customerMessage": null,
+                  "isQueuedForPrint": null,
+                  "isQueuedForEmail": null,
+                  "salesTaxCode": null,
+                  "suggestedDiscountAmount": null,
+                  "suggestedDiscountDate": null,
+                  "otherCustomField": null,
+                  "externalId": null,
+                  "linkedTransactions": [],
+                  "lines": [],
+                  "lineGroups": [],
+                  "customFields": []
+                }
+              ],
+              "nextCursor": null,
+              "hasMore": false,
+              "remainingCount": null,
+              "cursorExpiresAt": null
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "stdoutIncludes": [
+          "INV-1001",
+          "INV-1002"
+        ]
+      }
+    }
+  ]
+}

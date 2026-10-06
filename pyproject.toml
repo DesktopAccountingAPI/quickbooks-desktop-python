@@ -1,0 +1,103 @@
+[build-system]
+# A range rather than a pin, so the sdist also builds on Python 3.9 (hatchling 1.28+ needs 3.10).
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "desktopaccountingapi-quickbooks-desktop"
+version = "0.1.0"
+description = "Python client for Desktop Accounting API, the REST API for QuickBooks Desktop."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Desktop Accounting API" }]
+requires-python = ">=3.9"
+dependencies = [
+  "httpx>=0.25,<1",
+  "typing_extensions>=4.7",
+]
+keywords = ["quickbooks", "quickbooks desktop", "qbxml", "accounting", "api", "sdk"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Office/Business :: Financial :: Accounting",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://www.desktopaccountingapi.com/"
+Documentation = "https://www.desktopaccountingapi.com/docs/"
+Repository = "https://github.com/DesktopAccountingAPI/quickbooks-desktop-python"
+Issues = "https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/issues"
+Changelog = "https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+# Pinned dev tools, installed with the mise-pinned uv (`uv sync`). pytest 9 needs Python 3.10,
+# so the Python 3.9 CI job gets the last pytest release that supports 3.9.
+dev = [
+  "pytest==9.1.1; python_version >= '3.10'",
+  "pytest==8.4.2; python_version < '3.10'",
+  # mypy 1.19 is the last release that can check code against Python 3.9.
+  "mypy==1.19.1",
+  "ruff==0.16.10",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/desktopaccountingapi"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/conformance",
+  "/README.md",
+  "/CHANGELOG.md",
+  "/LICENSE",
+  "/api.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.mypy]
+strict = true
+# Checks against the interpreter of the virtual environment, so each CI matrix job (3.9-3.14)
+# type-checks for its own Python version.
+files = ["src", "tests", "examples", "scripts"]
+warn_unreachable = true
+# The generated models are large; skip the per-line precision report and keep incremental caching.
+incremental = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+  # Docstrings copied from the API contract may be long.
+  "E501",
+  # `Union`/`Optional` are needed in runtime type aliases on Python 3.9.
+  "UP007",
+  "UP045",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/desktopaccountingapi/types/*.py" = ["RUF001", "RUF002", "RUF003"]
+"src/desktopaccountingapi/resources/**/*.py" = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["desktopaccountingapi"]
