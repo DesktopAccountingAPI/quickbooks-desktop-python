@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "desktopaccountingapi-quickbooks-desktop"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python client for Desktop Accounting API, the REST API for QuickBooks Desktop."
 readme = "README.md"
 license = "MIT"
@@ -84,6 +84,8 @@ incremental = true
 line-length = 120
 target-version = "py39"
 src = ["src", "tests"]
+# README sample harnesses are templates ({{SAMPLE}}); scripts/readme-samples.mjs renders and type-checks them.
+extend-exclude = ["readme-samples"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
