@@ -1,0 +1,238 @@
+{
+  "description": "Standard Webhooks vectors. `now` is the verifier's clock in Unix seconds; tolerance is 300 s. `valid: false` cases must raise the SDK's webhook verification error. `signatureOnly` cases check the signature without parsing the body as a Desktop Accounting API event.",
+  "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ=",
+  "toleranceSeconds": 300,
+  "cases": [
+    {
+      "name": "valid",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": "v1,uw5uyOZrsoH0NHtHEyOjv7zOtlws6yU3wqeSZW+pXkQ="
+      },
+      "now": 1791216241,
+      "valid": true,
+      "event": {
+        "id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "type": "request.succeeded",
+        "timestamp": "2026-10-05T16:04:01.311Z",
+        "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+        "dataStatus": "succeeded",
+        "dataId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+      },
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "valid_during_rotation_second_signature",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": "v1,KwJDO+Ps/HO1KE1hm9zMygrW1wGKFeLPZNR1yA8e5qk= v1,uw5uyOZrsoH0NHtHEyOjv7zOtlws6yU3wqeSZW+pXkQ="
+      },
+      "now": 1791216241,
+      "valid": true,
+      "event": {
+        "id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "type": "request.succeeded",
+        "timestamp": "2026-10-05T16:04:01.311Z",
+        "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+        "dataStatus": "succeeded",
+        "dataId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+      },
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "valid_lowercase_header_names",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "webhook-id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "webhook-timestamp": "1791216241",
+        "webhook-signature": "v1,uw5uyOZrsoH0NHtHEyOjv7zOtlws6yU3wqeSZW+pXkQ="
+      },
+      "now": 1791216241,
+      "valid": true,
+      "event": {
+        "id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "type": "request.succeeded",
+        "timestamp": "2026-10-05T16:04:01.311Z",
+        "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+        "dataStatus": "succeeded",
+        "dataId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+      },
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "valid_unknown_event_type_is_passed_through",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"future.event_type\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": "v1,1liKGxmjaMZemKreTuPXk3j6nB1zEqJgY8aFlXRNt4I="
+      },
+      "now": 1791216241,
+      "valid": true,
+      "event": {
+        "id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "type": "future.event_type",
+        "timestamp": "2026-10-05T16:04:01.311Z",
+        "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+        "dataStatus": "succeeded",
+        "dataId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+      },
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "valid_within_tolerance_past",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791215942",
+        "Webhook-Signature": "v1,KIwH3EH9iMsvV5R3nzrZqjoDureKG6u8Jl8QjvTIHdE="
+      },
+      "now": 1791216241,
+      "valid": true,
+      "event": {
+        "id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "type": "request.succeeded",
+        "timestamp": "2026-10-05T16:04:01.311Z",
+        "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+        "dataStatus": "succeeded",
+        "dataId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+      },
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_tampered_body",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.failed\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": "v1,uw5uyOZrsoH0NHtHEyOjv7zOtlws6yU3wqeSZW+pXkQ="
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_wrong_secret",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": "v1,KwJDO+Ps/HO1KE1hm9zMygrW1wGKFeLPZNR1yA8e5qk="
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_signature_for_other_message_id",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": "v1,qKahxUwc6xk/T0v485y8Af7O+O8Ql4cFFSAKTFl1L9I="
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_timestamp_too_old",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791215940",
+        "Webhook-Signature": "v1,dYQEuZkz6kcUZ4kxIewJaEgm6CA6qu6SMfK2HNvShLo="
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_timestamp_too_new",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216542",
+        "Webhook-Signature": "v1,qpzME21fhIupDlkCXYwq981OVf5skGPibODq6ipCBAE="
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_timestamp_not_a_number",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "soon",
+        "Webhook-Signature": "v1,uw5uyOZrsoH0NHtHEyOjv7zOtlws6yU3wqeSZW+pXkQ="
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_unknown_signature_version",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": "v2,uw5uyOZrsoH0NHtHEyOjv7zOtlws6yU3wqeSZW+pXkQ="
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_missing_signature_header",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241"
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_missing_id_header",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": "v1,uw5uyOZrsoH0NHtHEyOjv7zOtlws6yU3wqeSZW+pXkQ="
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "invalid_empty_signature",
+      "body": "{\"id\":\"evt_01j9x4m6v4c8k2t7q0r5s3w1za\",\"type\":\"request.succeeded\",\"timestamp\":\"2026-10-05T16:04:01.311Z\",\"projectId\":\"proj_01j9x4m6v4c8k2t7q0r5s3w1zf\",\"data\":{\"objectType\":\"request\",\"id\":\"req_01j9x4m6v4c8k2t7q0r5s3w1zd\",\"status\":\"succeeded\",\"operationId\":\"qbd.invoices.create\",\"endUserId\":\"eu_01j9x4m6v4c8k2t7q0r5s3w1zb\",\"outcome\":\"applied\",\"error\":null}}",
+      "headers": {
+        "Webhook-Id": "evt_01j9x4m6v4c8k2t7q0r5s3w1za",
+        "Webhook-Timestamp": "1791216241",
+        "Webhook-Signature": ""
+      },
+      "now": 1791216241,
+      "valid": false,
+      "secret": "whsec_Y29uZm9ybWFuY2Utd2ViaG9vay1zZWNyZXQtMzJieXQ="
+    },
+    {
+      "name": "standard_webhooks_reference_vector",
+      "secret": "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+      "body": "{\"test\": 2432232314}",
+      "headers": {
+        "webhook-id": "msg_p5jXN8AQM9LWM0D4loKWxJek",
+        "webhook-timestamp": "1614265330",
+        "webhook-signature": "v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE="
+      },
+      "now": 1614265330,
+      "valid": true,
+      "signatureOnly": true
+    }
+  ]
+}

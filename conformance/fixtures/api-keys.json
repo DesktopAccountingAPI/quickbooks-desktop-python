@@ -1,0 +1,41 @@
+{
+  "description": "Secret keys are sk_live_ or sk_test_ followed by 40 base62 characters; the last 6 are the base62 (0-9A-Za-z, zero-padded) CRC32 of the preceding 34. SDKs reject invalid keys locally before any request.",
+  "valid": [
+    "sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+    "sk_live_aZ09aZ09aZ09aZ09aZ09aZ09aZ09aZ09xy26zcWJ"
+  ],
+  "invalid": [
+    {
+      "key": "",
+      "reason": "empty"
+    },
+    {
+      "key": "sk_test_Conformance0Key0For0SDK0Tests000010nQFLA",
+      "reason": "checksum mismatch"
+    },
+    {
+      "key": "sk_prod_Conformance0Key0For0SDK0Tests000010nQFLR",
+      "reason": "unknown environment prefix"
+    },
+    {
+      "key": "sk_test_Conformance0Key0For0SDK0Tests000010nQF",
+      "reason": "too short"
+    },
+    {
+      "key": "sk_test_Conformance0Key0For0SDK0Tests000010nQFLR0",
+      "reason": "too long"
+    },
+    {
+      "key": "pk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+      "reason": "publishable key prefix"
+    },
+    {
+      "key": "sk_test_Conformance0-ey0For0SDK0Tests000010nQFLR",
+      "reason": "non-base62 character"
+    },
+    {
+      "key": " sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+      "reason": "surrounding whitespace"
+    }
+  ]
+}

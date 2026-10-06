@@ -1,0 +1,8 @@
+* text=auto eol=lf
+src/desktopaccountingapi/types/__init__.py linguist-generated=true
+src/desktopaccountingapi/resources/** linguist-generated=true
+src/desktopaccountingapi/_client.py linguist-generated=true
+src/desktopaccountingapi/_error_codes.py linguist-generated=true
+conformance/fixtures/** linguist-generated=true
+api.md linguist-generated=true
+uv.lock linguist-generated=true

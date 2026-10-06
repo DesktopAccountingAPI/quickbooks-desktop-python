@@ -1,0 +1,21 @@
+[tools]
+python = "3.14.7"
+uv = "0.12.23"
+# The conformance suite runs conformance/mock-server.mjs.
+node = "24.20.0"
+
+[env]
+# Let uv install the interpreter named by UV_PYTHON (CI matrix) instead of failing.
+UV_PYTHON_DOWNLOADS = "automatic"
+
+[tasks.check]
+description = "Sync dev tools, lint, format check, mypy --strict, unit + conformance tests, examples, build and install the wheel"
+run = "python scripts/check.py"
+
+[tasks.test]
+description = "Unit and conformance tests only"
+run = "uv run pytest"
+
+[tasks.publish]
+description = "Build, publish to PyPI (skipped if the version exists), wait for it and smoke-test the installed package. --dry-run builds and checks only."
+run = "python scripts/publish.py"
