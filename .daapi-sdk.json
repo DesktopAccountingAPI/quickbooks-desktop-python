@@ -1,6 +1,6 @@
 {
   "repository": "DesktopAccountingAPI/quickbooks-desktop-python",
-  "sdkVersion": "0.1.0",
+  "sdkVersion": "0.1.1",
   "generator": {
     "name": "packages/sdk-generator",
     "version": "1.0.0"

@@ -5,7 +5,9 @@
 2. ``ruff check`` and ``ruff format --check``.
 3. ``mypy --strict`` (configured in pyproject.toml) on the package, tests, examples and scripts.
 4. ``pytest``: unit tests and the conformance suite (starts ``node conformance/mock-server.mjs``).
-5. ``scripts/publish.py --dry-run``: builds the sdist and wheel, installs the wheel into a fresh
+5. ``scripts/readme-samples.mjs``: ``mypy --strict`` on every Python sample in README.md, and the
+   quickstart sample against the conformance mock server.
+6. ``scripts/publish.py --dry-run``: builds the sdist and wheel, installs the wheel into a fresh
    virtual environment and runs the smoke program against it.
 """
 
@@ -37,6 +39,7 @@ def main() -> None:
     run("uv", "run", "--no-sync", "ruff", "format", "--check", ".")
     run("uv", "run", "--no-sync", "mypy", "--strict")
     run("uv", "run", "--no-sync", "pytest")
+    run("node", "scripts/readme-samples.mjs", "--lang", "python")
     run(sys.executable, "scripts/publish.py", "--dry-run")
     print("all checks passed")
 

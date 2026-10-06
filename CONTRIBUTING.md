@@ -16,7 +16,7 @@ Because of this, we usually cannot merge pull requests as they are. Open an issu
 
 Open an issue with:
 
-- the SDK version (`0.1.0` or later) and your Python version,
+- the SDK version (`0.1.1` or later) and your Python version,
 - the operation you called, for example `qbd.invoices.create`,
 - the `Daapi-Request-Id` of the failing call (every error exposes it as its request ID),
 - what you expected and what happened.
@@ -32,4 +32,4 @@ mise install
 mise run check
 ```
 
-`mise run check` builds the SDK, runs the strict compiler and lint settings, the unit tests and the cross-language conformance suite in `conformance/`. CI runs the same command.
+`mise run check` builds the SDK, runs the strict compiler and lint settings, the unit tests and the cross-language conformance suite in `conformance/`, and compiles every code sample in `README.md` (`scripts/readme-samples.mjs`; fragments are wrapped in the harnesses in `readme-samples/`). CI runs the same command.
