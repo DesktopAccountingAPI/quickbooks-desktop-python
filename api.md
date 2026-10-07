@@ -2,7 +2,7 @@
 
 # API reference
 
-Every method of `DesktopAccountingApi`, generated from the API contract (275 operations, contract `sha256:6f5ac28d7c33`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
+Every method of `DesktopAccountingApi`, generated from the API contract (275 operations, contract `sha256:b5774d24bc81`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
 
 Every method also accepts the keyword arguments `timeout`, `total_timeout` and `max_retries`; QuickBooks Desktop operations accept `end_user_id` (or Conductor's `conductor_end_user_id`) and `server_timeout`, and writes accept `idempotency_key`. Non-paginated methods are available under `with_raw_response`, and async-capable ones under `enqueue` (returning a `RequestHandle`).
 
