@@ -2,6 +2,13 @@
 
 ``DaapiError`` is the base of everything this SDK raises. ``APIError`` (and one subclass per
 error ``type``) carries the API's error object field by field. See the README section "Errors".
+
+Conductor-compatible names (``conductor-py``): ``ConductorError`` is ``DaapiError``, and every
+error from an HTTP response is also an ``APIStatusError`` and, for its status, a
+``BadRequestError`` (400), ``NotFoundError`` (404), ``ConflictError`` (409),
+``UnprocessableEntityError`` (422) or ``InternalServerError`` (5xx). The SDK raises a subclass of
+both the class for the error ``type`` and the status class, so ``except NotFoundError:`` and
+``except InvalidRequestError:`` both catch a 404 ``INVALID_REQUEST_ERROR``.
 """
 
 from __future__ import annotations
@@ -18,23 +25,30 @@ if TYPE_CHECKING:
 __all__ = [
     "APIConnectionError",
     "APIError",
+    "APIStatusError",
     "APITimeoutError",
     "ApiConnectionError",
     "ApiError",
     "ApiTimeoutError",
     "AuthenticationError",
+    "BadRequestError",
     "BillingError",
+    "ConductorError",
+    "ConflictError",
     "CursorExpiredError",
     "DaapiError",
     "ErrorFix",
     "IntegrationConnectionError",
     "IntegrationError",
     "InternalError",
+    "InternalServerError",
     "InvalidRequestError",
+    "NotFoundError",
     "OutcomeUnknownError",
     "PermissionDeniedError",
     "RateLimitError",
     "RequestPendingError",
+    "UnprocessableEntityError",
     "WebhookVerificationError",
 ]
 
@@ -152,6 +166,11 @@ class APIError(DaapiError):
         details = e.get("details")
         self.details = dict(details) if isinstance(details, Mapping) else {}
 
+    @property
+    def status_code(self) -> Optional[int]:
+        """Alias of :attr:`status` (Conductor's name)."""
+        return self.status
+
     def __str__(self) -> str:
         parts = [self.message]
         if self.code:
@@ -165,6 +184,30 @@ class APIError(DaapiError):
             f"{type(self).__name__}(status={self.status!r}, type={self.type!r}, code={self.code!r}, "
             f"message={self.message!r}, request_id={self.request_id!r})"
         )
+
+
+class APIStatusError(APIError):
+    """Any error that came with an HTTP status (Conductor's name). Raised errors combine it with their type class."""
+
+
+class BadRequestError(APIStatusError):
+    """HTTP 400 (Conductor's name). Raised errors combine it with their type class."""
+
+
+class NotFoundError(APIStatusError):
+    """HTTP 404 (Conductor's name). Raised errors combine it with their type class."""
+
+
+class ConflictError(APIStatusError):
+    """HTTP 409 (Conductor's name). Raised errors combine it with their type class."""
+
+
+class UnprocessableEntityError(APIStatusError):
+    """HTTP 422 (Conductor's name). Raised errors combine it with their type class."""
+
+
+class InternalServerError(APIStatusError):
+    """HTTP 500 or more (Conductor's name). Raised errors combine it with their type class."""
 
 
 class InvalidRequestError(APIError):
@@ -284,6 +327,8 @@ class WebhookVerificationError(DaapiError):
 ApiError = APIError
 ApiConnectionError = APIConnectionError
 ApiTimeoutError = APITimeoutError
+# Conductor's name for the base class.
+ConductorError = DaapiError
 
 _BY_TYPE: dict[str, type[APIError]] = {
     "INVALID_REQUEST_ERROR": InvalidRequestError,
@@ -298,17 +343,48 @@ _BY_TYPE: dict[str, type[APIError]] = {
 }
 
 
+_BY_STATUS: dict[int, type[APIStatusError]] = {
+    400: BadRequestError,
+    404: NotFoundError,
+    409: ConflictError,
+    422: UnprocessableEntityError,
+}
+
+_COMBINED: dict[tuple[type[APIError], type[APIStatusError]], type[APIError]] = {}
+
+
+def _with_status(cls: type[APIError], status: Optional[int]) -> type[APIError]:
+    """The class to raise: ``cls`` combined with the status class, so both ``except`` clauses match."""
+    if status is None:
+        return cls
+    status_cls = _BY_STATUS.get(status, InternalServerError if status >= 500 else APIStatusError)
+    if issubclass(cls, status_cls):
+        return cls
+    if cls is APIError:
+        return status_cls
+    combined = _COMBINED.get((cls, status_cls))
+    if combined is None:
+        combined = type(
+            cls.__name__,
+            (cls, status_cls),
+            {"__module__": cls.__module__, "__qualname__": cls.__qualname__, "__doc__": cls.__doc__},
+        )
+        _COMBINED[(cls, status_cls)] = combined
+    return combined
+
+
 def error_from_object(
     error: Mapping[str, Any], *, status: Optional[int], headers: Optional[httpx.Headers] = None, body: Any = None
 ) -> APIError:
-    """Builds the typed exception for an API error object. Unknown types get the base ``APIError``."""
+    """Builds the typed exception for an API error object. Unknown types get the base ``APIError``
+    (with its status class)."""
     err_type = error.get("type")
     cls: type[APIError] = _BY_TYPE.get(err_type, APIError) if isinstance(err_type, str) else APIError
     if error.get("code") == "CURSOR_EXPIRED" and cls is InvalidRequestError:
         cls = CursorExpiredError
     message = error.get("message")
     text = message if isinstance(message, str) and message else f"HTTP {status} error"
-    return cls(text, status=status, headers=headers, error=error, body=body)
+    return _with_status(cls, status)(text, status=status, headers=headers, error=error, body=body)
 
 
 def error_from_response(status: int, headers: httpx.Headers, content: bytes) -> APIError:
@@ -321,6 +397,6 @@ def error_from_response(status: int, headers: httpx.Headers, content: bytes) -> 
     if isinstance(parsed, Mapping) and isinstance(parsed.get("error"), Mapping):
         return error_from_object(parsed["error"], status=status, headers=headers, body=parsed)
     text = content.decode("utf-8", "replace")[:500] if content else ""
-    return APIError(
+    return _with_status(APIError, status)(
         f"HTTP {status} error without a JSON error body", status=status, headers=headers, body=text or parsed
     )

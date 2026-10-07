@@ -8,7 +8,7 @@
   },
   "scenarios": [
     {
-      "name": "list_auto_pagination_read_ahead",
+      "name": "list_auto_pagination",
       "description": "Iterates every item across three pages. The first request carries the filters (array filters as repeated keys); continue requests send only cursor and limit. Reads carry no Idempotency-Key.",
       "call": {
         "op": "qbd.invoices.list",
@@ -4234,6 +4234,419 @@
           "class": "OutcomeUnknownError",
           "code": "QBD_WRITE_OUTCOME_UNKNOWN",
           "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01e"
+        }
+      }
+    },
+    {
+      "name": "list_early_exit_sends_no_extra_request",
+      "description": "The caller stops iterating after the last item of the first page (take: 2). The next page is fetched only when the iteration needs it, so no continue request reaches QuickBooks.",
+      "call": {
+        "op": "qbd.invoices.list",
+        "kind": "iterate",
+        "take": 2,
+        "params": {
+          "limit": 2
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "query": {
+              "limit": [
+                "2"
+              ]
+            },
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01h"
+            },
+            "body": {
+              "objectType": "list",
+              "url": "/v1/quickbooks-desktop/invoices",
+              "data": [
+                {
+                  "id": "1-1700000000",
+                  "objectType": "qbd_invoice",
+                  "createdAt": "2026-10-05T09:14:03-07:00",
+                  "updatedAt": "2026-10-05T09:11:03-07:00",
+                  "revisionNumber": "1700000001",
+                  "transactionNumber": null,
+                  "customer": null,
+                  "class": null,
+                  "receivablesAccount": null,
+                  "documentTemplate": null,
+                  "transactionDate": null,
+                  "refNumber": "INV-1001",
+                  "billingAddress": null,
+                  "shippingAddress": null,
+                  "isPending": null,
+                  "isFinanceCharge": null,
+                  "purchaseOrderNumber": null,
+                  "terms": null,
+                  "dueDate": null,
+                  "salesRepresentative": null,
+                  "shipmentOrigin": null,
+                  "shippingDate": null,
+                  "shippingMethod": null,
+                  "subtotal": "105.50",
+                  "salesTaxItem": null,
+                  "salesTaxPercentage": null,
+                  "salesTaxTotal": null,
+                  "appliedAmount": null,
+                  "balanceRemaining": null,
+                  "currency": null,
+                  "exchangeRate": null,
+                  "balanceRemainingInHomeCurrency": null,
+                  "memo": null,
+                  "isPaid": null,
+                  "customerMessage": null,
+                  "isQueuedForPrint": null,
+                  "isQueuedForEmail": null,
+                  "salesTaxCode": null,
+                  "suggestedDiscountAmount": null,
+                  "suggestedDiscountDate": null,
+                  "otherCustomField": null,
+                  "externalId": null,
+                  "linkedTransactions": [],
+                  "lines": [],
+                  "lineGroups": [],
+                  "customFields": []
+                },
+                {
+                  "id": "2-1700000000",
+                  "objectType": "qbd_invoice",
+                  "createdAt": "2026-10-05T09:14:03-07:00",
+                  "updatedAt": "2026-10-05T09:12:03-07:00",
+                  "revisionNumber": "1700000002",
+                  "transactionNumber": null,
+                  "customer": null,
+                  "class": null,
+                  "receivablesAccount": null,
+                  "documentTemplate": null,
+                  "transactionDate": null,
+                  "refNumber": "INV-1002",
+                  "billingAddress": null,
+                  "shippingAddress": null,
+                  "isPending": null,
+                  "isFinanceCharge": null,
+                  "purchaseOrderNumber": null,
+                  "terms": null,
+                  "dueDate": null,
+                  "salesRepresentative": null,
+                  "shipmentOrigin": null,
+                  "shippingDate": null,
+                  "shippingMethod": null,
+                  "subtotal": "105.50",
+                  "salesTaxItem": null,
+                  "salesTaxPercentage": null,
+                  "salesTaxTotal": null,
+                  "appliedAmount": null,
+                  "balanceRemaining": null,
+                  "currency": null,
+                  "exchangeRate": null,
+                  "balanceRemainingInHomeCurrency": null,
+                  "memo": null,
+                  "isPaid": null,
+                  "customerMessage": null,
+                  "isQueuedForPrint": null,
+                  "isQueuedForEmail": null,
+                  "salesTaxCode": null,
+                  "suggestedDiscountAmount": null,
+                  "suggestedDiscountDate": null,
+                  "otherCustomField": null,
+                  "externalId": null,
+                  "linkedTransactions": [],
+                  "lines": [],
+                  "lineGroups": [],
+                  "customFields": []
+                }
+              ],
+              "nextCursor": "c1.page2",
+              "hasMore": true,
+              "remainingCount": 3,
+              "cursorExpiresAt": "2026-10-05T16:04:11.120Z"
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "items": [
+          "1-1700000000",
+          "2-1700000000"
+        ]
+      }
+    },
+    {
+      "name": "base_url_ending_in_v1_is_normalized",
+      "description": "A base URL that already ends in /v1 (Conductor's form, https://api.conductor.is/v1) is accepted; requests go to /v1/..., never /v1/v1/....",
+      "client": {
+        "baseUrlSuffix": "/v1/"
+      },
+      "call": {
+        "op": "qbd.healthCheck",
+        "kind": "call"
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/health-check",
+            "headers": {
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb"
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z"
+            },
+            "body": {
+              "status": "ok",
+              "duration": 812,
+              "quickbooks": {
+                "product": null,
+                "qbxmlVersion": null,
+                "companyName": null
+              }
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "result": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "default_headers_are_sent_and_sdk_headers_win",
+      "description": "Client default headers are sent on every request. Headers the SDK manages (Authorization, Daapi-End-User-Id, Idempotency-Key, Content-Type, Accept) take precedence over a default header with the same name.",
+      "client": {
+        "defaultHeaders": {
+          "X-Trace-Id": "conformance-trace",
+          "Daapi-End-User-Id": "eu_01j9x4m6v4c8k2t7q0r5s3w1ze"
+        }
+      },
+      "call": {
+        "op": "qbd.healthCheck",
+        "kind": "call"
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/health-check",
+            "headers": {
+              "x-trace-id": "conformance-trace",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR"
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01j"
+            },
+            "body": {
+              "status": "ok",
+              "duration": 812,
+              "quickbooks": {
+                "product": null,
+                "qbxmlVersion": null,
+                "companyName": null
+              }
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "result": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "total_timeout_bounds_the_whole_call",
+      "description": "totalTimeoutMs caps the whole call: the attempt is cut off when the total budget ends even though the per-attempt timeout is longer, and no retry starts after the budget is spent. The call raises the client-timeout error.",
+      "client": {
+        "timeoutMs": 10000,
+        "maxRetries": 3,
+        "totalTimeoutMs": 600
+      },
+      "call": {
+        "op": "qbd.customers.retrieve",
+        "kind": "call",
+        "path": {
+          "id": "80000001-1700000000"
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000"
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01k"
+            },
+            "body": {
+              "id": "80000001-1700000000",
+              "objectType": "qbd_customer",
+              "createdAt": "2026-10-05T09:14:03-07:00",
+              "updatedAt": "2026-10-05T09:14:03-07:00",
+              "revisionNumber": "sample",
+              "name": "Acme Supply",
+              "fullName": "Acme Supply",
+              "isActive": null,
+              "class": null,
+              "parent": null,
+              "sublevel": null,
+              "companyName": null,
+              "salutation": null,
+              "firstName": null,
+              "middleName": null,
+              "lastName": null,
+              "jobTitle": null,
+              "billingAddress": null,
+              "shippingAddress": null,
+              "alternateShippingAddresses": null,
+              "phone": null,
+              "alternatePhone": null,
+              "fax": null,
+              "email": null,
+              "ccEmail": null,
+              "contact": null,
+              "alternateContact": null,
+              "customContactFields": [],
+              "additionalContacts": [],
+              "customerType": null,
+              "terms": null,
+              "salesRepresentative": null,
+              "balance": "1234.50",
+              "totalBalance": null,
+              "salesTaxCode": null,
+              "salesTaxItem": null,
+              "resaleNumber": null,
+              "accountNumber": null,
+              "creditLimit": null,
+              "preferredPaymentMethod": null,
+              "creditCard": null,
+              "jobStatus": null,
+              "jobStartDate": null,
+              "jobProjectedEndDate": null,
+              "jobEndDate": null,
+              "jobDescription": null,
+              "jobType": null,
+              "note": null,
+              "additionalNotes": [],
+              "preferredDeliveryMethod": null,
+              "priceLevel": null,
+              "externalId": null,
+              "currency": null,
+              "customFields": []
+            },
+            "delayMs": 2500
+          }
+        }
+      ],
+      "outcome": {
+        "error": {
+          "class": "ApiConnectionError"
+        }
+      }
+    },
+    {
+      "name": "conductor_end_user_id_alias",
+      "description": "SDKs with a Conductor-named per-call end-user option (Node.js conductorEndUserId, Python conductor_end_user_id) send it as Daapi-End-User-Id, overriding the client default.",
+      "only": [
+        "node",
+        "python"
+      ],
+      "client": {
+        "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb"
+      },
+      "call": {
+        "op": "qbd.healthCheck",
+        "kind": "call",
+        "options": {
+          "conductorEndUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1ze"
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/health-check",
+            "headers": {
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1ze",
+              "conductor-end-user-id": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z"
+            },
+            "body": {
+              "status": "ok",
+              "duration": 812,
+              "quickbooks": {
+                "product": null,
+                "qbxmlVersion": null,
+                "companyName": null
+              }
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "result": {
+          "status": "ok"
+        }
+      }
+    },
+    {
+      "name": "conductor_end_user_id_conflict_fails_locally",
+      "description": "Passing the end user under both names with different values fails before any request is sent.",
+      "only": [
+        "node",
+        "python"
+      ],
+      "call": {
+        "op": "qbd.healthCheck",
+        "kind": "call",
+        "options": {
+          "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+          "conductorEndUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1ze"
+        }
+      },
+      "exchanges": [],
+      "outcome": {
+        "error": {
+          "class": "DaapiError"
         }
       }
     }
