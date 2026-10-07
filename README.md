@@ -15,12 +15,12 @@ The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.
 pip install desktopaccountingapi-quickbooks-desktop
 ```
 
-The current version is **0.2.0**. To pin it exactly:
+The current version is **0.2.1**. To pin it exactly:
 
 ```sh
-pip install "desktopaccountingapi-quickbooks-desktop==0.2.0"
-uv add "desktopaccountingapi-quickbooks-desktop==0.2.0"
-poetry add "desktopaccountingapi-quickbooks-desktop==0.2.0"
+pip install "desktopaccountingapi-quickbooks-desktop==0.2.1"
+uv add "desktopaccountingapi-quickbooks-desktop==0.2.1"
+poetry add "desktopaccountingapi-quickbooks-desktop==0.2.1"
 ```
 
 The distribution is `desktopaccountingapi-quickbooks-desktop`; the import package is `desktopaccountingapi`.
@@ -493,7 +493,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 - The Python, Node.js, .NET and Java SDKs and the [MCP server](https://github.com/DesktopAccountingAPI/quickbooks-desktop-mcp) are released together with the same version number, generated from the same API contract.
 - Every release is listed in [CHANGELOG.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CHANGELOG.md) and tagged `v<version>` on GitHub.
 - The API is versioned in its path (`/v1`). Within `v1` the API only adds operations, fields, enum values and error codes, and the SDK tolerates all of them, so older SDK versions keep working.
-- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:6f5ac28d7c33...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
+- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:b5774d24bc81...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
 
 ## Support
 
@@ -507,7 +507,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 
 The toolchain is pinned in `mise.toml`. `mise run check` installs the pinned dev tools with uv and runs ruff, `mypy --strict`, the unit tests, the cross-language conformance suite (against `conformance/mock-server.mjs`), the example type checks, the README samples (`mypy --strict` on every Python block of this file, and the quickstart against the mock server) and a build plus clean install of the wheel. Set `UV_PYTHON=3.9` (or any supported version) to run it on another interpreter.
 
-To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.2.0"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
+To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.2.1"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
 
 ## License
 

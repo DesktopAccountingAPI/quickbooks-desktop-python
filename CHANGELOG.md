@@ -11,7 +11,7 @@ Easier porting from Conductor's `conductor-py`; see "Porting from Conductor" in 
 
 ## 0.1.0
 
-First release, generated from API version 1.0.0 (contract `sha256:6f5ac28d7c33`, 275 operations).
+First release, generated from API version 1.0.0 (contract `sha256:b5774d24bc81`, 275 operations).
 
 - Synchronous `DesktopAccountingApi` and asyncio `AsyncDesktopAccountingApi` clients on httpx, for Python 3.9 to 3.14.
 - Every QuickBooks Desktop and platform operation as a typed method (`client.qbd.invoices.create(...)`, `client.end_users.passthrough(...)`), with request and response models in `desktopaccountingapi.types`.
