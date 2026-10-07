@@ -56,6 +56,51 @@ _MAX_RETRY_AFTER = 60.0
 
 _logger = logging.getLogger("desktopaccountingapi")
 
+_LOG_LEVELS = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+    "warn": logging.WARNING,
+    "warning": logging.WARNING,
+    "error": logging.ERROR,
+    "off": logging.CRITICAL + 10,
+}
+
+#: Headers the SDK manages; ``default_headers`` never supplies them.
+_MANAGED_HEADERS = frozenset(
+    name.lower()
+    for name in (
+        "Authorization",
+        "Accept",
+        "Content-Type",
+        "User-Agent",
+        "Daapi-End-User-Id",
+        "Conductor-End-User-Id",
+        "Idempotency-Key",
+        "Daapi-Timeout-Seconds",
+        "Prefer",
+        "Daapi-Queue-Ttl-Seconds",
+    )
+)
+
+
+def _setup_logging_from_env() -> None:
+    """``DAAPI_LOG=debug|info|warn|error|off`` sets the SDK logger's level and, if the logger has no
+    handler, adds one that writes to stderr."""
+    level = _LOG_LEVELS.get((os.environ.get("DAAPI_LOG") or "").strip().lower())
+    if level is None:
+        return
+    _logger.setLevel(level)
+    if not _logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("[%(asctime)s %(name)s] %(levelname)s %(message)s"))
+        _logger.addHandler(handler)
+
+
+def normalize_base_url(url: str) -> str:
+    """Removes trailing slashes and one trailing ``/v1``: the SDK adds ``/v1/...`` itself."""
+    url = url.rstrip("/")
+    return url[: -len("/v1")] if url.endswith("/v1") else url
+
 
 class Op(NamedTuple):
     """Static operation metadata emitted by the generator."""
@@ -83,7 +128,10 @@ class _Prepared(NamedTuple):
     attempt_timeout: float
     max_retries: int
     deadline: float
+    """``time.monotonic()`` deadline for waiting on a pending request: the total timeout if set, else the attempt timeout."""
     operation_id: str
+    total_deadline: Optional[float] = None
+    """``time.monotonic()`` after which no attempt or retry starts (``total_timeout``), if set."""
 
 
 def _identity(value: Any) -> Any:
@@ -136,6 +184,22 @@ def should_retry(response_status: int, headers: httpx.Headers, error: APIError) 
 def _retryable_transport_error(exc: httpx.TransportError) -> bool:
     # Configuration errors (bad URL scheme, proxy setup) do not improve on retry.
     return not isinstance(exc, (httpx.UnsupportedProtocol, httpx.ProxyError))
+
+
+def _attempt_timeout(prep: _Prepared) -> float:
+    """This attempt's timeout: the attempt timeout, cut to what is left of the total timeout. Raises
+    :class:`APITimeoutError` when the total timeout has ended."""
+    if prep.total_deadline is None:
+        return prep.attempt_timeout
+    remaining = prep.total_deadline - time.monotonic()
+    if remaining <= 0:
+        raise APITimeoutError(f"{prep.operation_id}: the call's total timeout ended before a response arrived.")
+    return min(prep.attempt_timeout, remaining)
+
+
+def _retry_fits(prep: _Prepared, delay: float) -> bool:
+    """Whether a retry after ``delay`` seconds can still start before the total timeout ends."""
+    return prep.total_deadline is None or time.monotonic() + delay < prep.total_deadline
 
 
 def _connection_error(exc: httpx.TransportError) -> APIConnectionError:
@@ -216,8 +280,10 @@ class _BaseClient:
         "base_url",
         "end_user_id",
         "timeout",
+        "total_timeout",
         "max_retries",
         "server_timeout",
+        "default_headers",
         "_logger",
         "_owns_http_client",
     )
@@ -226,8 +292,10 @@ class _BaseClient:
     base_url: str
     end_user_id: Optional[str]
     timeout: float
+    total_timeout: Optional[float]
     max_retries: int
     server_timeout: Optional[int]
+    default_headers: dict[str, str]
     _logger: logging.Logger
     _owns_http_client: bool
 
@@ -241,6 +309,8 @@ class _BaseClient:
         max_retries: int,
         server_timeout: Optional[int],
         logger: Optional[logging.Logger],
+        total_timeout: Optional[float] = None,
+        default_headers: Optional[Mapping[str, str]] = None,
     ) -> None:
         key = api_key if api_key is not None else os.environ.get("DAAPI_SECRET_KEY")
         if not key:
@@ -259,14 +329,20 @@ class _BaseClient:
             raise DaapiError(f"base_url must be an http(s) URL, got {url!r}.")
         if timeout is None or timeout <= 0:
             raise DaapiError("timeout must be a positive number of seconds.")
+        if total_timeout is not None and total_timeout <= 0:
+            raise DaapiError("total_timeout must be a positive number of seconds.")
         if max_retries < 0:
             raise DaapiError("max_retries must be zero or more.")
         self.api_key = key
-        self.base_url = url.rstrip("/")
+        self.base_url = normalize_base_url(url)
         self.end_user_id = end_user_id
         self.timeout = float(timeout)
+        self.total_timeout = float(total_timeout) if total_timeout is not None else None
         self.max_retries = max_retries
         self.server_timeout = server_timeout
+        self.default_headers = _checked_headers(default_headers)
+        if logger is None:
+            _setup_logging_from_env()
         self._logger = logger if logger is not None else _logger
 
     def __repr__(self) -> str:
@@ -297,8 +373,13 @@ class _BaseClient:
         timeout: Optional[float] = None,
         max_retries: Optional[int] = None,
         server_timeout: Optional[int] = None,
+        total_timeout: Optional[float] = None,
+        default_headers: Optional[Mapping[str, str]] = None,
     ) -> Self:
-        """A copy of this client with some settings changed. Shares the HTTP connection pool."""
+        """A copy of this client with some settings changed. Shares the HTTP connection pool.
+
+        ``default_headers`` replaces the client's default headers.
+        """
         changes: dict[str, Any] = {}
         if end_user_id is not None:
             changes["end_user_id"] = end_user_id
@@ -306,6 +387,12 @@ class _BaseClient:
             if timeout <= 0:
                 raise DaapiError("timeout must be a positive number of seconds.")
             changes["timeout"] = float(timeout)
+        if total_timeout is not None:
+            if total_timeout <= 0:
+                raise DaapiError("total_timeout must be a positive number of seconds.")
+            changes["total_timeout"] = float(total_timeout)
+        if default_headers is not None:
+            changes["default_headers"] = _checked_headers(default_headers)
         if max_retries is not None:
             if max_retries < 0:
                 raise DaapiError("max_retries must be zero or more.")
@@ -327,18 +414,27 @@ class _BaseClient:
         content_type: str = "application/json",
         accept: str = "application/json",
         end_user_id: Optional[str] = None,
+        conductor_end_user_id: Optional[str] = None,
         idempotency_key: Optional[str] = None,
         timeout: Optional[float] = None,
+        total_timeout: Optional[float] = None,
         max_retries: Optional[int] = None,
         server_timeout: Optional[int] = None,
         queue_ttl: Optional[int] = None,
         respond_async: bool = False,
     ) -> _Prepared:
-        headers: dict[str, str] = {
-            "Authorization": f"Bearer {self.api_key}",
-            "User-Agent": USER_AGENT,
-            "Accept": accept,
-        }
+        started = time.monotonic()
+        if conductor_end_user_id is not None:
+            if end_user_id is not None and end_user_id != conductor_end_user_id:
+                raise DaapiError(
+                    f"{op.operation_id}: end_user_id and conductor_end_user_id are both set to different "
+                    "values; pass only one."
+                )
+            end_user_id = conductor_end_user_id
+        headers: dict[str, str] = dict(self.default_headers)
+        headers["Authorization"] = f"Bearer {self.api_key}"
+        headers["User-Agent"] = USER_AGENT
+        headers["Accept"] = accept
         if op.end_user:
             user = end_user_id if end_user_id is not None else self.end_user_id
             if not user:
@@ -366,6 +462,9 @@ class _BaseClient:
         attempt_timeout = float(timeout) if timeout is not None else self.timeout
         if attempt_timeout <= 0:
             raise DaapiError("timeout must be a positive number of seconds.")
+        total = float(total_timeout) if total_timeout is not None else self.total_timeout
+        if total is not None and total <= 0:
+            raise DaapiError("total_timeout must be a positive number of seconds.")
         retries = max_retries if max_retries is not None else self.max_retries
         return _Prepared(
             method=method,
@@ -375,19 +474,22 @@ class _BaseClient:
             headers=headers,
             attempt_timeout=attempt_timeout,
             max_retries=max(0, retries),
-            deadline=time.monotonic() + attempt_timeout,
+            deadline=started + (total if total is not None else attempt_timeout),
             operation_id=op.operation_id,
+            total_deadline=started + total if total is not None else None,
         )
 
     def _prepare_poll(self, request_id: str, wait_seconds: Optional[int]) -> _Prepared:
         params = [("waitSeconds", str(wait_seconds))] if wait_seconds is not None else []
-        return self._prepare(
+        prep = self._prepare(
             _REQUESTS_RETRIEVE,
             "GET",
             f"/v1/requests/{request_id}",
             params=params,
             timeout=(wait_seconds or 0) + 10.0,
         )
+        # The caller's deadline already sized wait_seconds; the poll itself is not cut short.
+        return prep._replace(total_deadline=None)
 
     def _log_response(self, prep: _Prepared, response: httpx.Response, attempt: int) -> None:
         if self._logger.isEnabledFor(logging.DEBUG):
@@ -410,6 +512,17 @@ class _BaseClient:
             attempt + 1,
             prep.max_retries,
         )
+
+
+def _checked_headers(headers: Optional[Mapping[str, str]]) -> dict[str, str]:
+    """Default headers without the ones the SDK manages."""
+    out: dict[str, str] = {}
+    for name, value in (headers or {}).items():
+        if not isinstance(name, str) or not isinstance(value, str):
+            raise DaapiError("default_headers must map header names to string values.")
+        if name.lower() not in _MANAGED_HEADERS:
+            out[name] = value
+    return out
 
 
 def _poll_wait_seconds(deadline: float) -> Optional[int]:
@@ -445,6 +558,8 @@ class SyncAPIClient(_BaseClient):
         server_timeout: Optional[int] = None,
         http_client: Optional[httpx.Client] = None,
         logger: Optional[logging.Logger] = None,
+        total_timeout: Optional[float] = None,
+        default_headers: Optional[Mapping[str, str]] = None,
     ) -> None:
         self._configure(
             api_key=api_key,
@@ -454,6 +569,8 @@ class SyncAPIClient(_BaseClient):
             max_retries=max_retries,
             server_timeout=server_timeout,
             logger=logger,
+            total_timeout=total_timeout,
+            default_headers=default_headers,
         )
         if http_client is not None and not isinstance(http_client, httpx.Client):
             raise DaapiError(
@@ -483,11 +600,11 @@ class SyncAPIClient(_BaseClient):
                     params=tuple(prep.params),
                     content=prep.content,
                     headers=prep.headers,
-                    timeout=prep.attempt_timeout,
+                    timeout=_attempt_timeout(prep),
                 )
             except httpx.TransportError as exc:
-                if attempt < prep.max_retries and _retryable_transport_error(exc):
-                    delay = backoff_delay(attempt)
+                delay = backoff_delay(attempt)
+                if attempt < prep.max_retries and _retryable_transport_error(exc) and _retry_fits(prep, delay):
                     self._log_retry(prep, exc.__class__.__name__, delay, attempt)
                     time.sleep(delay)
                     attempt += 1
@@ -499,10 +616,11 @@ class SyncAPIClient(_BaseClient):
             error = error_from_response(response.status_code, response.headers, response.content)
             if attempt < prep.max_retries and should_retry(response.status_code, response.headers, error):
                 delay = backoff_delay(attempt, response.headers)
-                self._log_retry(prep, f"HTTP {response.status_code}", delay, attempt)
-                time.sleep(delay)
-                attempt += 1
-                continue
+                if _retry_fits(prep, delay):
+                    self._log_retry(prep, f"HTTP {response.status_code}", delay, attempt)
+                    time.sleep(delay)
+                    attempt += 1
+                    continue
             raise error
 
     def _execute(self, prep: _Prepared, cast_result: Callable[[Any], T]) -> tuple[T, httpx.Response]:
@@ -606,6 +724,8 @@ class AsyncAPIClient(_BaseClient):
         server_timeout: Optional[int] = None,
         http_client: Optional[httpx.AsyncClient] = None,
         logger: Optional[logging.Logger] = None,
+        total_timeout: Optional[float] = None,
+        default_headers: Optional[Mapping[str, str]] = None,
     ) -> None:
         self._configure(
             api_key=api_key,
@@ -615,6 +735,8 @@ class AsyncAPIClient(_BaseClient):
             max_retries=max_retries,
             server_timeout=server_timeout,
             logger=logger,
+            total_timeout=total_timeout,
+            default_headers=default_headers,
         )
         if http_client is not None and not isinstance(http_client, httpx.AsyncClient):
             raise DaapiError("http_client must be an httpx.AsyncClient (use DesktopAccountingApi for httpx.Client).")
@@ -642,11 +764,11 @@ class AsyncAPIClient(_BaseClient):
                     params=tuple(prep.params),
                     content=prep.content,
                     headers=prep.headers,
-                    timeout=prep.attempt_timeout,
+                    timeout=_attempt_timeout(prep),
                 )
             except httpx.TransportError as exc:
-                if attempt < prep.max_retries and _retryable_transport_error(exc):
-                    delay = backoff_delay(attempt)
+                delay = backoff_delay(attempt)
+                if attempt < prep.max_retries and _retryable_transport_error(exc) and _retry_fits(prep, delay):
                     self._log_retry(prep, exc.__class__.__name__, delay, attempt)
                     await asyncio.sleep(delay)
                     attempt += 1
@@ -658,10 +780,11 @@ class AsyncAPIClient(_BaseClient):
             error = error_from_response(response.status_code, response.headers, response.content)
             if attempt < prep.max_retries and should_retry(response.status_code, response.headers, error):
                 delay = backoff_delay(attempt, response.headers)
-                self._log_retry(prep, f"HTTP {response.status_code}", delay, attempt)
-                await asyncio.sleep(delay)
-                attempt += 1
-                continue
+                if _retry_fits(prep, delay):
+                    self._log_retry(prep, f"HTTP {response.status_code}", delay, attempt)
+                    await asyncio.sleep(delay)
+                    attempt += 1
+                    continue
             raise error
 
     async def _execute(self, prep: _Prepared, cast_result: Callable[[Any], T]) -> tuple[T, httpx.Response]:

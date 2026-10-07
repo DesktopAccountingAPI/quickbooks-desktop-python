@@ -1,15 +1,19 @@
-"""Cursor pagination with one page of read-ahead.
+"""Cursor pagination.
 
-QuickBooks iterators expire when idle (``cursorExpiresAt``), so the pager requests page N+1 as
-soon as page N arrives. A network error while fetching a page retries the same cursor, which the
-server answers with the same page. ``410 CURSOR_EXPIRED`` raises :class:`CursorExpiredError` with
-the progress so far; the pager never restarts a list on its own.
+The next page is requested only when the iteration needs it, so a loop that stops early never
+sends an extra QuickBooks query. QuickBooks iterators expire when idle (``cursorExpiresAt``, about
+10 seconds), so while you iterate items, a page held for more than ``_READ_AHEAD_AFTER`` seconds
+makes the pager request the next page in the background. ``list_all()`` always requests the next
+page as soon as a page arrives. A network error while fetching a page retries the same cursor,
+which the server answers with the same page. ``410 CURSOR_EXPIRED`` raises
+:class:`CursorExpiredError` with the progress so far; the pager never restarts a list on its own.
 """
 
 from __future__ import annotations
 
 import asyncio
 import datetime as _dt
+import time
 from collections.abc import AsyncIterator, Iterator, Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any, Callable, Generic, Optional, TypeVar
@@ -23,6 +27,9 @@ if TYPE_CHECKING:
     from ._base_client import AsyncAPIClient, Op, SyncAPIClient
 
 T = TypeVar("T")
+
+_READ_AHEAD_AFTER = 2.0
+"""Seconds the item iterator holds a page before it requests the next one in the background."""
 
 
 class CursorPage(Generic[T]):
@@ -112,10 +119,11 @@ class _PagerBase(Generic[T]):
 class CursorPager(_PagerBase[T]):
     """Iterates a cursor list. Nothing is fetched until you iterate or call ``first_page()``.
 
-    - ``for item in pager``: every item across all pages (one page of read-ahead).
+    - ``for item in pager``: every item across all pages. The next page is requested when the loop
+      reaches it, or in the background once a page has been held for 2 seconds.
     - ``pager.first_page()``: only the first page.
-    - ``pager.iter_pages()``: page by page.
-    - ``pager.list_all()``: every item, drained into a list.
+    - ``pager.iter_pages()``: page by page, each requested when you ask for it.
+    - ``pager.list_all()``: every item, drained into a list (always reads one page ahead).
     """
 
     def __init__(
@@ -138,54 +146,101 @@ class CursorPager(_PagerBase[T]):
         """Fetches the first page only."""
         return self._fetch(self._first_params)
 
-    def iter_pages(self) -> Iterator[CursorPage[T]]:
-        """Yields page by page, fetching the next page in the background as soon as a page arrives."""
-        return self._pages(None)
+    def _fetch_next(self, cursor: str, progress: _Progress, delivered: int) -> CursorPage[T]:
+        try:
+            return self._fetch(self._continue_params(cursor))
+        except CursorExpiredError as error:
+            _record_expiry(error, progress, delivered)
+            raise
 
-    def _pages(self, progress: Optional[_Progress]) -> Iterator[CursorPage[T]]:
-        per_page = progress is None
-        tracked = progress if progress is not None else _Progress()
+    def iter_pages(self) -> Iterator[CursorPage[T]]:
+        """Yields page by page. The next page is requested when you ask for it."""
+        progress = _Progress()
+        delivered = 0
+        page = self._fetch(self._first_params)
+        while True:
+            yield page
+            delivered += 1
+            progress.items += len(page.data)
+            if page._raw_items:
+                progress.last = page._raw_items[-1]
+            if not (page.has_more and page.next_cursor):
+                return
+            page = self._fetch_next(page.next_cursor, progress, delivered)
+
+    def __iter__(self) -> Iterator[T]:
+        progress = _Progress()
+        delivered = 0
         executor: Optional[ThreadPoolExecutor] = None
         pending: Optional[Future[CursorPage[T]]] = None
-        delivered = 0
         try:
             page = self._fetch(self._first_params)
             while True:
-                pending = None
-                if page.has_more and page.next_cursor:
-                    if executor is None:
-                        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="daapi-read-ahead")
-                    pending = executor.submit(self._fetch, self._continue_params(page.next_cursor))
-                yield page
+                received = time.monotonic()
+                cursor = page.next_cursor if page.has_more and page.next_cursor else None
+                for index, item in enumerate(page.data):
+                    # Read-ahead for slow consumers: the caller asked for another item and has held
+                    # this page long enough that waiting for its end could let the cursor lapse.
+                    if cursor and pending is None and time.monotonic() - received >= _READ_AHEAD_AFTER:
+                        if executor is None:
+                            executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="daapi-read-ahead")
+                        pending = executor.submit(self._fetch, self._continue_params(cursor))
+                    progress.items += 1
+                    progress.last = page._raw_items[index]
+                    yield item
                 delivered += 1
-                if per_page:
-                    tracked.items += len(page.data)
-                    if page._raw_items:
-                        tracked.last = page._raw_items[-1]
-                if pending is None:
+                if cursor is None:
                     return
+                if pending is None:
+                    page = self._fetch_next(cursor, progress, delivered)
+                    continue
                 try:
                     page = pending.result()
                 except CursorExpiredError as error:
-                    _record_expiry(error, tracked, delivered)
+                    _record_expiry(error, progress, delivered)
                     raise
+                finally:
+                    pending = None
         finally:
             if pending is not None:
                 pending.cancel()
             if executor is not None:
                 executor.shutdown(wait=False)
 
-    def __iter__(self) -> Iterator[T]:
-        progress = _Progress()
-        for page in self._pages(progress):
-            for index, item in enumerate(page.data):
-                progress.items += 1
-                progress.last = page._raw_items[index]
-                yield item
-
     def list_all(self) -> list[T]:
-        """Fetches every page and returns all items in one list."""
-        return list(self)
+        """Fetches every page and returns all items in one list, requesting each next page in the
+        background as soon as a page arrives."""
+        progress = _Progress()
+        delivered = 0
+        out: list[T] = []
+        executor: Optional[ThreadPoolExecutor] = None
+        pending: Optional[Future[CursorPage[T]]] = None
+        try:
+            page = self._fetch(self._first_params)
+            while True:
+                if page.has_more and page.next_cursor:
+                    if executor is None:
+                        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="daapi-read-ahead")
+                    pending = executor.submit(self._fetch, self._continue_params(page.next_cursor))
+                out.extend(page.data)
+                delivered += 1
+                progress.items += len(page.data)
+                if page._raw_items:
+                    progress.last = page._raw_items[-1]
+                if pending is None:
+                    return out
+                try:
+                    page = pending.result()
+                except CursorExpiredError as error:
+                    _record_expiry(error, progress, delivered)
+                    raise
+                finally:
+                    pending = None
+        finally:
+            if pending is not None:
+                pending.cancel()
+            if executor is not None:
+                executor.shutdown(wait=False)
 
 
 class AsyncCursorPager(_PagerBase[T]):
@@ -212,33 +267,54 @@ class AsyncCursorPager(_PagerBase[T]):
         """Fetches the first page only."""
         return await self._fetch(self._first_params)
 
-    def iter_pages(self) -> AsyncIterator[CursorPage[T]]:
-        """Yields page by page, fetching the next page in a background task as soon as a page arrives."""
-        return self._pages(None)
+    async def _fetch_next(self, cursor: str, progress: _Progress, delivered: int) -> CursorPage[T]:
+        try:
+            return await self._fetch(self._continue_params(cursor))
+        except CursorExpiredError as error:
+            _record_expiry(error, progress, delivered)
+            raise
 
-    async def _pages(self, progress: Optional[_Progress]) -> AsyncIterator[CursorPage[T]]:
-        per_page = progress is None
-        tracked = progress if progress is not None else _Progress()
-        pending: Optional[asyncio.Task[CursorPage[T]]] = None
+    async def iter_pages(self) -> AsyncIterator[CursorPage[T]]:
+        """Yields page by page. The next page is requested when you ask for it."""
+        progress = _Progress()
         delivered = 0
+        page = await self._fetch(self._first_params)
+        while True:
+            yield page
+            delivered += 1
+            progress.items += len(page.data)
+            if page._raw_items:
+                progress.last = page._raw_items[-1]
+            if not (page.has_more and page.next_cursor):
+                return
+            page = await self._fetch_next(page.next_cursor, progress, delivered)
+
+    async def __aiter__(self) -> AsyncIterator[T]:
+        progress = _Progress()
+        delivered = 0
+        pending: Optional[asyncio.Task[CursorPage[T]]] = None
         try:
             page = await self._fetch(self._first_params)
             while True:
-                pending = None
-                if page.has_more and page.next_cursor:
-                    pending = asyncio.ensure_future(self._fetch(self._continue_params(page.next_cursor)))
-                yield page
+                received = time.monotonic()
+                cursor = page.next_cursor if page.has_more and page.next_cursor else None
+                for index, item in enumerate(page.data):
+                    # Read-ahead for slow consumers (see CursorPager.__iter__).
+                    if cursor and pending is None and time.monotonic() - received >= _READ_AHEAD_AFTER:
+                        pending = asyncio.ensure_future(self._fetch(self._continue_params(cursor)))
+                    progress.items += 1
+                    progress.last = page._raw_items[index]
+                    yield item
                 delivered += 1
-                if per_page:
-                    tracked.items += len(page.data)
-                    if page._raw_items:
-                        tracked.last = page._raw_items[-1]
-                if pending is None:
+                if cursor is None:
                     return
+                if pending is None:
+                    page = await self._fetch_next(cursor, progress, delivered)
+                    continue
                 try:
                     page = await pending
                 except CursorExpiredError as error:
-                    _record_expiry(error, tracked, delivered)
+                    _record_expiry(error, progress, delivered)
                     raise
                 finally:
                     pending = None
@@ -246,14 +322,32 @@ class AsyncCursorPager(_PagerBase[T]):
             if pending is not None and not pending.done():
                 pending.cancel()
 
-    async def __aiter__(self) -> AsyncIterator[T]:
-        progress = _Progress()
-        async for page in self._pages(progress):
-            for index, item in enumerate(page.data):
-                progress.items += 1
-                progress.last = page._raw_items[index]
-                yield item
-
     async def list_all(self) -> list[T]:
-        """Fetches every page and returns all items in one list."""
-        return [item async for item in self]
+        """Fetches every page and returns all items in one list, requesting each next page in a
+        background task as soon as a page arrives."""
+        progress = _Progress()
+        delivered = 0
+        out: list[T] = []
+        pending: Optional[asyncio.Task[CursorPage[T]]] = None
+        try:
+            page = await self._fetch(self._first_params)
+            while True:
+                if page.has_more and page.next_cursor:
+                    pending = asyncio.ensure_future(self._fetch(self._continue_params(page.next_cursor)))
+                out.extend(page.data)
+                delivered += 1
+                progress.items += len(page.data)
+                if page._raw_items:
+                    progress.last = page._raw_items[-1]
+                if pending is None:
+                    return out
+                try:
+                    page = await pending
+                except CursorExpiredError as error:
+                    _record_expiry(error, progress, delivered)
+                    raise
+                finally:
+                    pending = None
+        finally:
+            if pending is not None and not pending.done():
+                pending.cancel()

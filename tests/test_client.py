@@ -235,7 +235,7 @@ def test_non_json_error_without_header_is_not_retried() -> None:
     rec = Recorder([httpx.Response(502, text="<html>Bad gateway</html>")])
     with pytest.raises(daapi.APIError) as info:
         client_for(rec).qbd.customers.retrieve("80000001-1")
-    assert type(info.value) is daapi.APIError
+    assert type(info.value) is daapi.InternalServerError  # APIError with Conductor's 5xx status class
     assert info.value.status == 502 and info.value.code is None
     assert len(rec.requests) == 1
 
@@ -291,13 +291,54 @@ def test_error_classes_by_type() -> None:
     }
     for type_, cls in cases.items():
         error = error_from_response(400, httpx.Headers(), json.dumps(error_json(type_, "X", 400)).encode())
-        assert type(error) is cls
+        assert isinstance(error, cls) and type(error).__name__ == cls.__name__
+        assert isinstance(error, daapi.BadRequestError) and isinstance(error, daapi.APIStatusError)
     future = error_from_response(418, httpx.Headers(), json.dumps(error_json("FUTURE", "X", 418)).encode())
-    assert type(future) is daapi.APIError
+    assert type(future) is daapi.APIStatusError
+    assert not isinstance(future, tuple(cases.values()))
     expired = error_from_response(
         410, httpx.Headers(), json.dumps(error_json("INVALID_REQUEST_ERROR", "CURSOR_EXPIRED", 410)).encode()
     )
     assert isinstance(expired, daapi.CursorExpiredError) and isinstance(expired, daapi.InvalidRequestError)
+
+
+def test_conductor_error_names() -> None:
+    assert daapi.ConductorError is daapi.DaapiError
+    not_found = error_json("INVALID_REQUEST_ERROR", "OBJECT_NOT_FOUND", 404, integrationCode="500")
+    rec = Recorder([httpx.Response(404, headers={"Daapi-Should-Retry": "false"}, json=not_found)])
+    client = client_for(rec)
+    with pytest.raises(daapi.NotFoundError) as info:
+        client.qbd.invoices.retrieve("7-1")
+    error = info.value
+    assert isinstance(error, daapi.InvalidRequestError) and isinstance(error, daapi.APIStatusError)
+    assert type(error).__name__ == "InvalidRequestError"
+    assert not isinstance(error, (daapi.BadRequestError, daapi.ConflictError, daapi.InternalServerError))
+    assert error.status_code == 404 == error.status == error.http_status_code
+    assert (error.code, error.type, error.integration_code, error.request_id) == (
+        "OBJECT_NOT_FOUND",
+        "INVALID_REQUEST_ERROR",
+        "500",
+        "req_body",
+    )
+    assert error.user_facing_message == "Something went wrong." and error.fixes and error.docs_url
+    assert getattr(error, "code", None) == "OBJECT_NOT_FOUND"  # Conductor's documented getattr pattern
+    statuses = {
+        400: daapi.BadRequestError,
+        409: daapi.ConflictError,
+        422: daapi.UnprocessableEntityError,
+        503: daapi.InternalServerError,
+    }
+    for status, cls in statuses.items():
+        e = error_from_response(
+            status, httpx.Headers(), json.dumps(error_json("INTEGRATION_ERROR", "X", status)).encode()
+        )
+        assert isinstance(e, cls) and isinstance(e, daapi.IntegrationError)
+    cursor = error_from_response(
+        410, httpx.Headers(), json.dumps(error_json("INVALID_REQUEST_ERROR", "CURSOR_EXPIRED", 410)).encode()
+    )
+    assert isinstance(cursor, daapi.CursorExpiredError) and isinstance(cursor, daapi.APIStatusError)
+    again = error_from_response(404, httpx.Headers(), json.dumps(not_found).encode())
+    assert type(again) is type(error), "combined classes are cached"
 
 
 # --- pending requests and async mode ---------------------------------------------------------
@@ -407,6 +448,59 @@ def test_first_page_and_iter_pages() -> None:
     assert rec.requests[-1].url.params.multi_items() == [("cursor", "c1")]
 
 
+def test_loop_that_stops_early_sends_no_extra_request() -> None:
+    for stop_at in ("1", "2"):
+        rec = Recorder([httpx.Response(200, json=page_json(["1", "2"], "c1"))])
+        for invoice in client_for(rec).qbd.invoices.list(limit=2):
+            if invoice.id == stop_at:
+                break
+        assert len(rec.requests) == 1, stop_at
+    rec = Recorder([httpx.Response(200, json=page_json(["1", "2"], "c1"))])
+    for page in client_for(rec).qbd.invoices.list(limit=2).iter_pages():
+        assert len(page) == 2
+        break
+    assert len(rec.requests) == 1
+
+
+def test_fast_loop_requests_the_next_page_when_needed() -> None:
+    rec = Recorder(
+        [httpx.Response(200, json=page_json(["1", "2"], "c1")), httpx.Response(200, json=page_json(["3"], None))]
+    )
+    seen: list[str] = []
+    for invoice in client_for(rec).qbd.invoices.list(limit=2):
+        seen.append(invoice.id)
+        if invoice.id == "2":
+            assert len(rec.requests) == 1
+    assert seen == ["1", "2", "3"] and len(rec.requests) == 2
+
+
+def test_slow_loop_reads_ahead(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("desktopaccountingapi._pagination._READ_AHEAD_AFTER", 0.0)
+    rec = Recorder(
+        [httpx.Response(200, json=page_json(["1", "2"], "c1")), httpx.Response(200, json=page_json(["3"], None))]
+    )
+    seen = [invoice.id for invoice in client_for(rec).qbd.invoices.list(limit=2)]
+    assert seen == ["1", "2", "3"]
+    assert [r.url.params.get("cursor") for r in rec.requests] == [None, "c1"]
+
+    async def scenario() -> None:
+        rec.responses = [
+            httpx.Response(200, json=page_json(["1", "2"], "c1")),
+            httpx.Response(200, json=page_json(["3"], None)),
+        ]
+        rec.requests.clear()
+        async with async_client_for(rec) as client:
+            got: list[str] = []
+            async for invoice in client.qbd.invoices.list(limit=2):
+                got.append(invoice.id)
+                if invoice.id == "1":
+                    await asyncio.sleep(0)
+                    await asyncio.sleep(0)
+            assert got == ["1", "2", "3"] and len(rec.requests) == 2
+
+    asyncio.run(scenario())
+
+
 def test_cursor_expired_progress() -> None:
     expired = error_json(
         "INVALID_REQUEST_ERROR", "CURSOR_EXPIRED", 410, outcome="not_applicable", details={"reason": "idle_timeout"}
@@ -462,6 +556,96 @@ def test_async_client_end_to_end() -> None:
             assert isinstance(all_items, list)
 
     asyncio.run(scenario())
+
+
+# --- Conductor-compatible options -------------------------------------------------------------
+
+
+def test_conductor_end_user_id_alias() -> None:
+    rec = Recorder([httpx.Response(200, json=page_json(["1"], "c1")), httpx.Response(200, json=page_json(["2"], None))])
+    client = client_for(rec, end_user_id=None)
+    ids = [i.id for i in client.qbd.invoices.list(conductor_end_user_id="eu_ported", limit=1)]
+    assert ids == ["1", "2"]
+    assert [r.headers["daapi-end-user-id"] for r in rec.requests] == ["eu_ported", "eu_ported"]
+    assert all(
+        "conductorEndUserId" not in str(r.url) and "conductor-end-user-id" not in r.headers for r in rec.requests
+    )
+    rec.responses = [httpx.Response(201, json=invoice_json())]
+    client.qbd.invoices.create(customer_id="80000001-1", conductor_end_user_id="eu_body")
+    assert rec.requests[-1].headers["daapi-end-user-id"] == "eu_body"
+    assert "conductor" not in rec.requests[-1].content.decode()
+    client.qbd.invoices.retrieve("7-1", end_user_id="eu_same", conductor_end_user_id="eu_same")
+    count = len(rec.requests)
+    with pytest.raises(daapi.DaapiError, match="conductor_end_user_id"):
+        client.qbd.invoices.retrieve("7-1", end_user_id="eu_a", conductor_end_user_id="eu_b")
+    assert len(rec.requests) == count
+
+
+def test_base_url_ending_in_v1(monkeypatch: pytest.MonkeyPatch) -> None:
+    rec = Recorder([httpx.Response(200, json={"status": "ok", "duration": 5, "quickbooks": {}})])
+    client = DesktopAccountingApi(
+        api_key=KEY,
+        base_url="https://api.test/prefix/v1/",
+        end_user_id=EU,
+        http_client=httpx.Client(transport=httpx.MockTransport(rec)),
+    )
+    assert client.base_url == "https://api.test/prefix"
+    client.qbd.health_check()
+    assert rec.requests[0].url.path == "/prefix/v1/quickbooks-desktop/health-check"
+    monkeypatch.setenv("DAAPI_BASE_URL", "https://env.test/v1")
+    with DesktopAccountingApi(api_key=KEY) as from_env:
+        assert from_env.base_url == "https://env.test"
+
+
+def test_default_headers() -> None:
+    rec = Recorder([httpx.Response(200, json=invoice_json())])
+    client = client_for(
+        rec, default_headers={"X-Team": "billing", "Authorization": "Bearer nope", "Daapi-End-User-Id": "eu_header"}
+    )
+    client.qbd.invoices.retrieve("7-1")
+    sent = rec.requests[0].headers
+    assert sent["x-team"] == "billing"
+    assert sent["authorization"] == f"Bearer {KEY}" and sent["daapi-end-user-id"] == EU
+    client.with_options(default_headers={"X-Other": "1"}).qbd.invoices.retrieve("7-1")
+    assert rec.requests[1].headers["x-other"] == "1" and "x-team" not in rec.requests[1].headers
+    with pytest.raises(daapi.DaapiError):
+        client_for(rec, default_headers={"X-Bad": 1})
+
+
+def test_total_timeout_caps_attempts_and_retries() -> None:
+    rec = Recorder([httpx.Response(200, json=invoice_json())])
+    client_for(rec, total_timeout=0.5).qbd.invoices.retrieve("7-1")
+    assert rec.requests[0].extensions["timeout"]["read"] <= 0.5
+    client_for(rec).qbd.invoices.retrieve("7-1", total_timeout=0.25)
+    assert rec.requests[1].extensions["timeout"]["read"] <= 0.25
+    client_for(rec).qbd.invoices.retrieve("7-1")
+    assert rec.requests[2].extensions["timeout"]["read"] == 100.0
+    busy = httpx.Response(
+        503,
+        headers={"Daapi-Should-Retry": "true", "Retry-After": "1"},
+        json=error_json("INTEGRATION_CONNECTION_ERROR", "QBD_MODAL_DIALOG_OPEN", 503),
+    )
+    rec = Recorder([busy])
+    with pytest.raises(daapi.IntegrationConnectionError):
+        client_for(rec, total_timeout=0.5).qbd.invoices.retrieve("7-1")
+    assert len(rec.requests) == 1, "a retry after 1 s would end after the total timeout"
+    rec = Recorder([httpx.ConnectError("refused")])
+    with pytest.raises(daapi.APIConnectionError):
+        client_for(rec, total_timeout=0.01, max_retries=5).qbd.invoices.retrieve("7-1")
+    assert len(rec.requests) == 1
+
+
+def test_daapi_log_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    logger = logging.getLogger("desktopaccountingapi")
+    saved_level, saved_handlers = logger.level, list(logger.handlers)
+    monkeypatch.setenv("DAAPI_LOG", "info")
+    try:
+        client_for(Recorder([httpx.Response(200, json=invoice_json())]))
+        assert logger.level == logging.INFO
+        assert logger.handlers
+    finally:
+        logger.setLevel(saved_level)
+        logger.handlers[:] = saved_handlers
 
 
 def test_logger_never_logs_secrets(caplog: pytest.LogCaptureFixture) -> None:

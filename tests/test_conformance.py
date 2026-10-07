@@ -47,6 +47,19 @@ CANONICAL_ERRORS: dict[str, type[BaseException]] = {
 }
 
 
+TYPE_CLASSES: tuple[type[daapi.APIError], ...] = (
+    daapi.InvalidRequestError,
+    daapi.AuthenticationError,
+    daapi.PermissionDeniedError,
+    daapi.BillingError,
+    daapi.RateLimitError,
+    daapi.IntegrationConnectionError,
+    daapi.IntegrationError,
+    daapi.OutcomeUnknownError,
+    daapi.InternalError,
+)
+
+
 def snake(name: str) -> str:
     """Same word splitting as the generator (packages/sdk-generator/src/naming.ts)."""
     spaced = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", name)
@@ -123,6 +136,8 @@ def _call_args(method: Callable[..., Any], call: Mapping[str, Any]) -> tuple[lis
         kwargs["idempotency_key"] = options["idempotencyKey"]
     if "endUserId" in options:
         kwargs["end_user_id"] = options["endUserId"]
+    if "conductorEndUserId" in options:
+        kwargs["conductor_end_user_id"] = options["conductorEndUserId"]
     if "timeoutMs" in options:
         kwargs["timeout"] = options["timeoutMs"] / 1000
     if "serverTimeoutSeconds" in options:
@@ -137,13 +152,18 @@ def _client_kwargs(scenario: Mapping[str, Any], url: str) -> dict[str, Any]:
     def pick(key: str) -> Any:
         return overrides[key] if key in overrides else default.get(key)
 
-    return {
+    kwargs: dict[str, Any] = {
         "api_key": overrides.get("apiKey", SCENARIOS["apiKey"]),
-        "base_url": f"{url}/s/{scenario['name']}",
+        "base_url": f"{url}/s/{scenario['name']}{overrides.get('baseUrlSuffix', '')}",
         "end_user_id": pick("endUserId"),
         "max_retries": pick("maxRetries"),
         "timeout": pick("timeoutMs") / 1000,
     }
+    if "defaultHeaders" in overrides:
+        kwargs["default_headers"] = overrides["defaultHeaders"]
+    if "totalTimeoutMs" in overrides:
+        kwargs["total_timeout"] = overrides["totalTimeoutMs"] / 1000
+    return kwargs
 
 
 class Observed:
@@ -178,6 +198,8 @@ def run_sync(scenario: Mapping[str, Any], url: str) -> Observed:
                 seen.items = []
                 for item in method(*args, **kwargs):
                     seen.items.append(item)
+                    if "take" in call and len(seen.items) >= call["take"]:
+                        break
             elif kind == "firstPage":
                 method = getattr(resource, name)
                 args, kwargs = _call_args(method, call)
@@ -221,6 +243,8 @@ async def _run_async(scenario: Mapping[str, Any], url: str) -> Observed:
                 seen.items = []
                 async for item in method(*args, **kwargs):
                     seen.items.append(item)
+                    if "take" in call and len(seen.items) >= call["take"]:
+                        break
             elif kind == "firstPage":
                 method = getattr(resource, name)
                 args, kwargs = _call_args(method, call)
@@ -342,7 +366,10 @@ def check_outcome(scenario: Mapping[str, Any], seen: Observed) -> None:
         assert error is not None, "expected an error, the call succeeded"
         cls = CANONICAL_ERRORS[expected_error["class"]]
         if expected_error["class"] == "ApiError":
-            assert type(error) is daapi.APIError, f"expected exactly APIError, got {type(error).__name__}: {error!r}"
+            # Exactly APIError, apart from the Conductor status classes it is combined with.
+            assert isinstance(error, daapi.APIError) and not isinstance(error, TYPE_CLASSES), (
+                f"expected exactly APIError, got {type(error).__name__}: {error!r}"
+            )
         else:
             assert isinstance(error, cls), f"expected {cls.__name__}, got {type(error).__name__}: {error!r}"
         fields = _error_fields(error)
@@ -372,6 +399,8 @@ SCENARIO_IDS = [s["name"] for s in SCENARIOS["scenarios"]]
 @pytest.mark.parametrize("mode", ["sync", "async"])
 @pytest.mark.parametrize("scenario", SCENARIOS["scenarios"], ids=SCENARIO_IDS)
 def test_scenario(scenario: Mapping[str, Any], mode: str, mock_server_url: str) -> None:
+    if "python" not in scenario.get("only", ["python"]):
+        pytest.skip("scenario for other SDKs")
     _control(mock_server_url, "reset", scenario["name"])
     seen = (run_sync if mode == "sync" else run_async)(scenario, mock_server_url)
     check_outcome(scenario, seen)

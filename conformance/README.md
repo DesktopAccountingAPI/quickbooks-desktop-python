@@ -26,13 +26,15 @@ node conformance/mock-server.mjs [--fixtures conformance/fixtures/scenarios.json
 ```jsonc
 {
   "name": "create_retries_with_same_idempotency_key",
+  "only": ["node", "python"],           // optional: the SDKs that run this scenario (default: all)
   "client": { "maxRetries": 2 },        // optional overrides of the top-level defaultClient
   "call": {
     "op": "qbd.invoices.create",        // operation ID
     "kind": "call",                     // call | iterate | firstPage | withResponse | enqueue
     "path": { "id": "..." },            // path parameters by wire name
     "params": { ... },                  // query parameters or JSON body, wire (camelCase) names
-    "options": { "idempotencyKey": "...", "endUserId": "...", "timeoutMs": 500, "serverTimeoutSeconds": 30 },
+    "options": { "idempotencyKey": "...", "endUserId": "...", "conductorEndUserId": "...", "timeoutMs": 500, "serverTimeoutSeconds": 30 },
+    "take": 2,                          // iterate only: stop (break) after this many items
     "wait": { "timeoutMs": 20000 }      // enqueue only: then call handle.wait()
   },
   "exchanges": [ { "expect": { ... }, "respond": { ... }, "repeat": false } ],
@@ -47,6 +49,11 @@ Build a fresh client for each scenario:
 - `apiKey`: `scenario.client.apiKey`, else the top-level `apiKey`.
 - `baseUrl`: `<url>/s/<name>`.
 - `endUserId`, `maxRetries`, `timeoutMs`: `scenario.client` if the key is present (`endUserId: null` means no default end user), else `defaultClient`.
+- `baseUrlSuffix` (optional): appended to the base URL as given, for example `/v1/`. The SDK must still send `/v1/...`, never `/v1/v1/...`.
+- `defaultHeaders` (optional): the client's default headers (name to value).
+- `totalTimeoutMs` (optional): the client's total time budget for one call, including retries and backoff.
+
+A scenario with `only` runs in the listed SDKs (`node`, `python`, `dotnet`, `java`) and is skipped by the others. It covers Conductor-compatible names that only exist where Conductor published an SDK: `options.conductorEndUserId` is Node.js `conductorEndUserId` and Python `conductor_end_user_id`.
 
 If building the client throws (invalid key), handle the error as the call's error.
 
@@ -55,7 +62,7 @@ If building the client throws (invalid key), handle the error as the call's erro
 | kind | What the runner does |
 | --- | --- |
 | `call` | Invokes the operation and keeps the typed result. |
-| `iterate` | Auto-paginates the cursor list and collects every item. If iteration raises, keeps both the items yielded so far and the error. |
+| `iterate` | Auto-paginates the cursor list and collects every item. With `take`, stops iterating (leaves the loop) once it has that many items. If iteration raises, keeps both the items yielded so far and the error. |
 | `firstPage` | Fetches only the first page, without iterating. |
 | `withResponse` | Calls through the SDK's raw-response access and keeps the result plus status and headers. |
 | `enqueue` | Calls the operation in async mode (`Prefer: respond-async`), keeps the request handle, then calls `handle.wait()` with `wait.timeoutMs`. |
@@ -132,7 +139,7 @@ Canonical error classes:
 | `RequestPendingError` | same | same | `RequestPendingException` | `RequestPendingException` |
 | `ApiConnectionError` (no response) | same | `APIConnectionError` | `ApiConnectionException` | `ApiConnectionException` |
 
-The class must be the exact canonical class or a subclass of it. `ApiError` expects exactly the base class: an unknown error `type` must not be forced into a subclass.
+The class must be the exact canonical class or a subclass of it. `ApiError` expects exactly the base class: an unknown error `type` must not be forced into a subclass. Python also mixes Conductor's status classes (`APIStatusError`, `NotFoundError`, `InternalServerError`, ...) into every error raised for an HTTP response; they do not count as type subclasses.
 
 After each scenario, call the verify endpoint and fail on `ok: false`.
 

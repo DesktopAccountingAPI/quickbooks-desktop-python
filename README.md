@@ -15,12 +15,12 @@ The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.
 pip install desktopaccountingapi-quickbooks-desktop
 ```
 
-The current version is **0.1.1**. To pin it exactly:
+The current version is **0.2.0**. To pin it exactly:
 
 ```sh
-pip install "desktopaccountingapi-quickbooks-desktop==0.1.1"
-uv add "desktopaccountingapi-quickbooks-desktop==0.1.1"
-poetry add "desktopaccountingapi-quickbooks-desktop==0.1.1"
+pip install "desktopaccountingapi-quickbooks-desktop==0.2.0"
+uv add "desktopaccountingapi-quickbooks-desktop==0.2.0"
+poetry add "desktopaccountingapi-quickbooks-desktop==0.2.0"
 ```
 
 The distribution is `desktopaccountingapi-quickbooks-desktop`; the import package is `desktopaccountingapi`.
@@ -97,7 +97,7 @@ A QuickBooks call without an end user raises `DaapiError` before anything is sen
 
 ### List records with auto-pagination
 
-Iterating a list walks every page. The SDK requests the next page while you process the current one, so slow loop bodies stay inside the QuickBooks cursor's idle window.
+Iterating a list walks every page. The next page is requested only when the loop needs it, so a loop that stops early never runs an extra QuickBooks query. If you hold a page for more than 2 seconds, the SDK requests the next one in the background, so slow loop bodies stay inside the QuickBooks cursor's idle window.
 
 ```python
 import datetime
@@ -233,22 +233,24 @@ patient = DesktopAccountingApi(timeout=30, max_retries=4, server_timeout=25)
 patient.qbd.invoices.retrieve("7-1700000000", end_user_id="eu_01j9x4m6v4c8k2t7q0r5s3w1zb", max_retries=0)
 ```
 
-`timeout` is the client's limit per HTTP attempt in seconds; `server_timeout` is how long the API waits for QuickBooks. Reads and writes retry only when it is safe; see [Retries and idempotency](#retries-and-idempotency) and [Timeouts](#timeouts).
+`timeout` is the client's limit per HTTP attempt in seconds; `total_timeout` caps a whole call including retries; `server_timeout` is how long the API waits for QuickBooks. Reads and writes retry only when it is safe; see [Retries and idempotency](#retries-and-idempotency) and [Timeouts](#timeouts).
 
 ## Configuration
 
 | Argument | Environment variable | Default | Meaning |
 | --- | --- | --- | --- |
 | `api_key` | `DAAPI_SECRET_KEY` | required | Secret key, `sk_live_...` or `sk_test_...`. Checked locally (format and checksum) before any request; a missing or malformed key raises `DaapiError`. |
-| `base_url` | `DAAPI_BASE_URL` | `https://api.desktopaccountingapi.com` | API host. May include a path prefix. |
+| `base_url` | `DAAPI_BASE_URL` | `https://api.desktopaccountingapi.com` | API host. May include a path prefix. A trailing `/v1` is removed, so `https://api.desktopaccountingapi.com/v1` works too. |
 | `end_user_id` | | `None` | Default end user for QuickBooks Desktop operations. |
-| `timeout` | | `100` | Client-side timeout in seconds for each HTTP attempt, and the time budget for waiting on requests that are still running in QuickBooks. |
+| `timeout` | | `100` | Client-side timeout in seconds for each HTTP attempt; each retry gets a fresh one. Without `total_timeout`, also the time budget for waiting on requests that are still running in QuickBooks. |
+| `total_timeout` | | `None` | Time budget in seconds for a whole call: attempts, retry backoff and the wait for a pending request. |
 | `max_retries` | | `2` | Retries for network errors, `429` and retryable `5xx` responses. |
 | `server_timeout` | | API default (90) | Seconds the API waits for QuickBooks before answering (`Daapi-Timeout-Seconds`, 1-300). |
+| `default_headers` | | none | Headers sent with every request. The headers the SDK manages (`Authorization`, `Accept`, `Content-Type`, `User-Agent`, `Daapi-End-User-Id`, `Idempotency-Key`, `Daapi-Timeout-Seconds`, `Prefer`) are ignored here. |
 | `http_client` | | new client | Your own `httpx.Client` (`httpx.AsyncClient` for the async client) for proxies, custom transports or connection limits. You close it yourself. |
-| `logger` | | `logging.getLogger("desktopaccountingapi")` | Receives request and retry diagnostics at `DEBUG`/`INFO`. It never logs keys, headers or bodies. |
+| `logger` | `DAAPI_LOG` | `logging.getLogger("desktopaccountingapi")` | Receives request and retry diagnostics at `DEBUG`/`INFO`. It never logs keys, headers or bodies. `DAAPI_LOG=debug`, `info`, `warn`, `error` or `off` sets that logger's level and adds a stderr handler if it has none. |
 
-Every method also accepts `timeout` and `max_retries`, QuickBooks Desktop operations accept `end_user_id` and `server_timeout`, and writes accept `idempotency_key`. `client.with_options(...)` returns a copy with other defaults. Close the client with `client.close()` (`await client.close()`) or use it as a context manager.
+Every method also accepts `timeout`, `total_timeout` and `max_retries`, QuickBooks Desktop operations accept `end_user_id` (or Conductor's `conductor_end_user_id`) and `server_timeout`, and writes accept `idempotency_key`. `client.with_options(...)` returns a copy with other defaults. Close the client with `client.close()` (`await client.close()`) or use it as a context manager.
 
 ## Models, money and dates
 
@@ -268,7 +270,7 @@ client.qbd.invoices.update(invoice.id, revision_number=invoice.revision_number, 
 
 ## Pagination
 
-Cursor lists return a pager. Iterating it yields every item across pages. A network error while fetching a page retries the same cursor, which returns the same page.
+Cursor lists return a pager. Iterating it yields every item across pages. The next page is requested only when the iteration reaches it, so `break`ing out of a loop never sends an extra QuickBooks query. While you iterate items, a page held for more than 2 seconds makes the SDK request the next page in the background, which keeps slow loops inside the cursor's idle window. `iter_pages()` requests each page when you ask for it; `list_all()` always requests the next page as soon as a page arrives. A network error while fetching a page retries the same cursor, which returns the same page.
 
 ```python
 pager = client.qbd.invoices.list(customer_ids=["80000001-1700000000"], limit=100)
@@ -319,6 +321,8 @@ Every error is a `DaapiError`. Problems found before sending (missing key, malfo
 
 `APIConnectionError` (with `APITimeoutError`) means no response arrived after all retries. `RequestPendingError` means a request is still running in QuickBooks when the time budget ended. `WebhookVerificationError` comes from webhook verification. `ApiError`, `ApiConnectionError` and `ApiTimeoutError` are aliases.
 
+Conductor's names work too (see [Porting from Conductor](#porting-from-conductor)). `ConductorError` is `DaapiError`. Every error from an HTTP response is also an `APIStatusError`, and for its status a `BadRequestError` (400), `NotFoundError` (404), `ConflictError` (409), `UnprocessableEntityError` (422) or `InternalServerError` (5xx): a 404 `INVALID_REQUEST_ERROR` is caught by both `except InvalidRequestError` and `except NotFoundError`. `status_code` is an alias of `status`.
+
 `APIError` exposes the error object field by field: `status` (HTTP status), `type`, `code`, `message`, `user_facing_message`, `http_status_code`, `integration_code`, `request_id` (from the body, else the `Daapi-Request-Id` header), `cause`, `fixes` (each with `actor` and `action`), `docs_url`, `retryable`, `outcome`, `param`, `details` and the response `headers`. `ErrorCode` and `ErrorType` hold a constant for every catalog code and type:
 
 ```python
@@ -351,10 +355,11 @@ It never retries when `Daapi-Should-Retry` is `false`, when the error's `outcome
 
 ## Timeouts
 
-- `timeout` (client side, default 100 s) limits each HTTP attempt and is the time budget of a call.
+- `timeout` (client side, default 100 s) limits each HTTP attempt. A retry starts a new attempt with a fresh timeout, so with retries a call can take longer than `timeout`.
+- `total_timeout` (client side, no default) limits the whole call: every attempt, the waits between retries, and the wait for a pending request. An attempt still running when it ends is cut off (`APITimeoutError`), and no retry starts that could not finish in time.
 - `server_timeout` (`Daapi-Timeout-Seconds`) is how long the API waits for QuickBooks before answering a sync call (API default 90 s, health check 60 s, maximum 300 s).
 
-If the API answers `504 QBD_REQUEST_TIMEOUT` because the request was sent to QuickBooks but has not finished, the SDK does not send it again. It long-polls `GET /v1/requests/{id}` until the request finishes or the call's `timeout` ends, then returns the typed result, raises the request's typed error, or raises `RequestPendingError` with `request_id` (and the last `request` snapshot). Check the request later:
+If the API answers `504 QBD_REQUEST_TIMEOUT` because the request was sent to QuickBooks but has not finished, the SDK does not send it again. It long-polls `GET /v1/requests/{id}` until the request finishes or the call's deadline (`total_timeout`, else `timeout`) ends, then returns the typed result, raises the request's typed error, or raises `RequestPendingError` with `request_id` (and the last `request` snapshot). Check the request later:
 
 ```python
 from desktopaccountingapi import RequestPendingError
@@ -412,13 +417,83 @@ print(result, xml)
 
 Passthrough always sends an idempotency key, because a message other than a query is a write.
 
+## Porting from Conductor
+
+Code written for `conductor-py` runs on this SDK with two edits: the import and the API key. The resource tree, method names, keyword arguments and response fields are the same, and Conductor's `conductor_end_user_id=` and error class names are accepted.
+
+```python harness=none
+# Before (conductor-py):
+#   import conductor
+#   from conductor import Conductor
+#   client = Conductor(api_key=os.environ["CONDUCTOR_SECRET_KEY"])
+import os
+
+import desktopaccountingapi as conductor
+from desktopaccountingapi import DesktopAccountingApi as Conductor
+
+client = Conductor(api_key=os.environ["DAAPI_SECRET_KEY"])
+
+# Everything below is unchanged Conductor code.
+end_user_id = "eu_01j9x4m6v4c8k2t7q0r5s3w1zb"
+client.qbd.health_check(conductor_end_user_id=end_user_id)
+for invoice in client.qbd.invoices.list(conductor_end_user_id=end_user_id, limit=50):
+    print(invoice.ref_number, invoice.subtotal)
+customer = client.qbd.customers.create(conductor_end_user_id=end_user_id, name="Acme Supply")
+
+try:
+    client.qbd.invoices.retrieve("7-1700000000", conductor_end_user_id=end_user_id)
+except conductor.NotFoundError:
+    print("No such invoice")
+except conductor.RateLimitError:
+    print("A 429 status code was received; back off a bit.")
+except conductor.APIStatusError as e:
+    print(e.status_code, getattr(e, "code", None), getattr(e, "user_facing_message", str(e)))
+    # Our richer fields are on the error too.
+    print(e.type, e.integration_code, e.request_id, e.cause, e.fixes, e.docs_url, e.outcome, e.retryable)
+except conductor.APIConnectionError:
+    print("The server could not be reached")
+print(customer.id)
+```
+
+The async client is `AsyncDesktopAccountingApi` (Conductor's `AsyncConductor`). Client options keep their Conductor names where they exist (`api_key`, `base_url`, `timeout`, `max_retries`, `default_headers`, `http_client`):
+
+```python harness=none
+import os
+
+import httpx
+
+from desktopaccountingapi import DesktopAccountingApi as Conductor
+
+client = Conductor(
+    api_key=os.environ["DAAPI_SECRET_KEY"],
+    base_url="https://api.desktopaccountingapi.com/v1",  # a trailing /v1 is fine
+    timeout=120.0,  # per attempt, as in Conductor
+    max_retries=2,
+    default_headers={"X-Trace-Id": "billing-sync"},
+    http_client=httpx.Client(),
+)
+print(client.base_url)
+```
+
+What to change by hand:
+
+- **API key and base URL.** `DAAPI_SECRET_KEY` (`sk_test_...`, `sk_live_...`) instead of `CONDUCTOR_SECRET_KEY`; `CONDUCTOR_BASE_URL` is not read.
+- **End-user IDs.** Create end users here (`eu_...`); Conductor's `end_usr_...` IDs do not exist in this API.
+- **Pages.** `list()` returns a pager: iterate it, or use `first_page()`, `iter_pages()` and `list_all()`. Pages are plain data (`data`, `next_cursor`, `has_more`); replace `page.has_next_page()` / `page.get_next_page()` loops with `iter_pages()`.
+- **Timeouts.** `timeout` is a number of seconds per attempt; an `httpx.Timeout` object is not accepted. Use `total_timeout` to cap a whole call.
+- **Errors.** `APIConnectionError` is not a subclass of `APIError` here; catch `ConductorError` (`DaapiError`) to cover both. Errors have no `response` or `request` attribute; `headers`, `body` and `status_code` are there.
+- **Per-call extras.** `extra_headers`, `extra_query` and `extra_body` are not supported; use `default_headers` on the client.
+- **Retries.** Writes always carry an `Idempotency-Key`, and only safe failures are retried (see [Retries and idempotency](#retries-and-idempotency)); Conductor's SDK retried 408 and 409 too.
+
+The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migrating-from-conductor/) covers the API-level differences.
+
 ## Versioning and changelog
 
 - This package follows [semantic versioning](https://semver.org/). Only a major version removes or renames anything in the SDK's public API.
 - The Python, Node.js, .NET and Java SDKs and the [MCP server](https://github.com/DesktopAccountingAPI/quickbooks-desktop-mcp) are released together with the same version number, generated from the same API contract.
 - Every release is listed in [CHANGELOG.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CHANGELOG.md) and tagged `v<version>` on GitHub.
 - The API is versioned in its path (`/v1`). Within `v1` the API only adds operations, fields, enum values and error codes, and the SDK tolerates all of them, so older SDK versions keep working.
-- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:1cc3058cecb5...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
+- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:6f5ac28d7c33...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
 
 ## Support
 
@@ -432,7 +507,7 @@ Passthrough always sends an idempotency key, because a message other than a quer
 
 The toolchain is pinned in `mise.toml`. `mise run check` installs the pinned dev tools with uv and runs ruff, `mypy --strict`, the unit tests, the cross-language conformance suite (against `conformance/mock-server.mjs`), the example type checks, the README samples (`mypy --strict` on every Python block of this file, and the quickstart against the mock server) and a build plus clean install of the wheel. Set `UV_PYTHON=3.9` (or any supported version) to run it on another interpreter.
 
-To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.1.1"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
+To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.2.0"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
 
 ## License
 

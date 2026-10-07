@@ -52,11 +52,11 @@ class RequestHandle(Generic[T]):
 
         Raises the typed API error if the request failed, was canceled or has an unknown outcome,
         and :class:`RequestPendingError` if it is still running after ``timeout`` seconds
-        (default: the client's ``timeout``).
+        (default: the client's ``total_timeout``, else its ``timeout``).
         """
         if self._value is not _UNSET:
             return cast(T, self._value)
-        budget = timeout if timeout is not None else self._client.timeout
+        budget = timeout if timeout is not None else (self._client.total_timeout or self._client.timeout)
         value, _ = self._client._poll(self.id, self._cast, time.monotonic() + budget)
         return value
 
@@ -108,7 +108,7 @@ class AsyncRequestHandle(Generic[T]):
         """Long-polls until the request ends and returns its typed result (see ``RequestHandle.wait``)."""
         if self._value is not _UNSET:
             return cast(T, self._value)
-        budget = timeout if timeout is not None else self._client.timeout
+        budget = timeout if timeout is not None else (self._client.total_timeout or self._client.timeout)
         value, _ = await self._client._poll(self.id, self._cast, time.monotonic() + budget)
         return value
 
