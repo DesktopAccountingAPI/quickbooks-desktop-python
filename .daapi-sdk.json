@@ -1,13 +1,13 @@
 {
   "repository": "DesktopAccountingAPI/quickbooks-desktop-python",
-  "sdkVersion": "0.2.1",
+  "sdkVersion": "0.3.0",
   "generator": {
     "name": "packages/sdk-generator",
     "version": "1.0.0"
   },
   "contract": {
     "path": "packages/api-contract/generated/openapi.json",
-    "sha256": "b5774d24bc8154ccc2acb85370ae27581a072c3f5070a529111ee2dd26f103b9",
+    "sha256": "79b06eb2008381661d24d3bd5e23643483ec1bf9b70d5f4cdff2a2a71e22fe94",
     "openapi": "3.1.0",
     "apiVersion": "1.0.0"
   },

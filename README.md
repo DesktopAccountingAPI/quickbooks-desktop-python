@@ -15,12 +15,12 @@ The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.
 pip install desktopaccountingapi-quickbooks-desktop
 ```
 
-The current version is **0.2.1**. To pin it exactly:
+The current version is **0.3.0**. To pin it exactly:
 
 ```sh
-pip install "desktopaccountingapi-quickbooks-desktop==0.2.1"
-uv add "desktopaccountingapi-quickbooks-desktop==0.2.1"
-poetry add "desktopaccountingapi-quickbooks-desktop==0.2.1"
+pip install "desktopaccountingapi-quickbooks-desktop==0.3.0"
+uv add "desktopaccountingapi-quickbooks-desktop==0.3.0"
+poetry add "desktopaccountingapi-quickbooks-desktop==0.3.0"
 ```
 
 The distribution is `desktopaccountingapi-quickbooks-desktop`; the import package is `desktopaccountingapi`.
@@ -47,19 +47,24 @@ A secret key can read and write every connected company file in its project. Kee
 
 ## Quickstart
 
-Each of your customers is an **end user** (`eu_...`) with one QuickBooks Desktop company file, connected through the Web Connector. Copy an end user ID from the dashboard's **End users** page, then:
+Each of your customers is an **end user** (`eu_...`) with one QuickBooks Desktop company file, connected through the Web Connector. Copy an end user ID from the dashboard's **End users** page and set it as `DAAPI_END_USER_ID` (`export DAAPI_END_USER_ID="eu_..."`), then:
 
 ```python run=quickstart harness=none
+import os
+
 from desktopaccountingapi import DesktopAccountingApi
 
 # Reads DAAPI_SECRET_KEY. for_end_user sends Daapi-End-User-Id on every QuickBooks call.
-client = DesktopAccountingApi().for_end_user("eu_01j9x4m6v4c8k2t7q0r5s3w1zb")
+client = DesktopAccountingApi().for_end_user(os.environ["DAAPI_END_USER_ID"])
 
 health = client.qbd.health_check()
 print(f"QuickBooks connection: {health.status}")
 
-for invoice in client.qbd.invoices.list(limit=10):
+# The loop fetches further pages as needed (10 invoices per request); stop after the first 10.
+for shown, invoice in enumerate(client.qbd.invoices.list(limit=10), start=1):
     print(invoice.ref_number, invoice.subtotal)  # subtotal is a Decimal, for example Decimal("105.50")
+    if shown == 10:
+        break
 ```
 
 With asyncio:
@@ -157,7 +162,7 @@ A stale revision is a `409` `INTEGRATION_ERROR` with code `QBD_REVISION_NUMBER_S
     "type": "INTEGRATION_ERROR",
     "code": "QBD_REVISION_NUMBER_STALE",
     "message": "The object changed since you read it; revisionNumber is out of date.",
-    "userFacingMessage": "This record was changed by someone else. Reload it and try again.",
+    "userFacingMessage": "This record changed in QuickBooks Desktop after it was loaded. Reload it and try again.",
     "httpStatusCode": 409,
     "integrationCode": "3200",
     "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -285,17 +290,19 @@ everything = pager.list_all()  # all items in a list
 
 The async pager works with `async for`, `await pager.first_page()`, `async for page in pager.iter_pages()` and `await pager.list_all()`.
 
-If the iterator expires (idle too long, QuickBooks restarted, session ended), the pager raises `CursorExpiredError` with `items_yielded`, `pages_served`, `last_id`, `last_updated_at` and `reason`. It never restarts the list on its own, because records may have changed. Resume with a watermark and skip what you already have:
+If the iterator expires (idle too long, QuickBooks restarted, session ended), the pager raises `CursorExpiredError` with `items_yielded`, `pages_served`, `last_id`, `last_updated_at` and `reason`. It never restarts the list on its own, because records may have changed. Restart the same query and skip what you already have. Do not resume from the last record's `updatedAt`: QuickBooks returns records in its own order, not by `updatedAt`, so records you have not read yet can be older than the last one you read. An incremental sync restarts from the `updatedAfter` watermark it saved before the traversal ([pagination guide](https://www.desktopaccountingapi.com/docs/guides/pagination/#recovering-from-cursor_expired)).
 
 ```python
-from desktopaccountingapi import NOT_GIVEN, CursorExpiredError
+from desktopaccountingapi import CursorExpiredError
 
 seen: set[str] = set()
 try:
     for customer in client.qbd.customers.list():
         seen.add(customer.id)
 except CursorExpiredError as error:
-    for customer in client.qbd.customers.list(updated_after=error.last_updated_at or NOT_GIVEN):
+    print(error.items_yielded, error.pages_served, error.last_id, error.reason, error.request_id)
+    # Restart the same query and skip the IDs you already have.
+    for customer in client.qbd.customers.list():
         if customer.id not in seen:
             seen.add(customer.id)
 ```
@@ -356,10 +363,10 @@ It never retries when `Daapi-Should-Retry` is `false`, when the error's `outcome
 ## Timeouts
 
 - `timeout` (client side, default 100 s) limits each HTTP attempt. A retry starts a new attempt with a fresh timeout, so with retries a call can take longer than `timeout`.
-- `total_timeout` (client side, no default) limits the whole call: every attempt, the waits between retries, and the wait for a pending request. An attempt still running when it ends is cut off (`APITimeoutError`), and no retry starts that could not finish in time.
+- `total_timeout` (client side, no default) limits the whole call: every attempt, the waits between retries, and the wait for a pending request. No SDK attempt or retry starts after it ends, and an attempt that runs past it fails with `APITimeoutError`. The async client enforces it as a hard bound. The sync client enforces it between network operations: each attempt's connect, read, write and pool timeouts are the time left, and the deadline is checked once headers arrive, between body chunks and after the body and its cleanup finish. One stalled read can therefore overrun by at most its read budget, and a server that keeps trickling header bytes can extend an attempt. The SDK never starts its own attempt or retry after the deadline. The sync client cannot bound everything: retries inside an injected transport (for example `httpx.HTTPTransport(retries=3)`), synchronous DNS lookups, and your own auth, hook, transport or cleanup code can run longer; how httpx applies its connect, read, write and pool timeouts depends on the transport; and a transport error that arrives after the deadline surfaces as `APIConnectionError` rather than `APITimeoutError`. If you need a hard bound, use the async client.
 - `server_timeout` (`Daapi-Timeout-Seconds`) is how long the API waits for QuickBooks before answering a sync call (API default 90 s, health check 60 s, maximum 300 s).
 
-If the API answers `504 QBD_REQUEST_TIMEOUT` because the request was sent to QuickBooks but has not finished, the SDK does not send it again. It long-polls `GET /v1/requests/{id}` until the request finishes or the call's deadline (`total_timeout`, else `timeout`) ends, then returns the typed result, raises the request's typed error, or raises `RequestPendingError` with `request_id` (and the last `request` snapshot). Check the request later:
+If the API answers `504 QBD_REQUEST_TIMEOUT` because the request was sent to QuickBooks but has not finished, the SDK does not send it again. It long-polls `GET /v1/requests/{id}` until the request finishes or the call's deadline (`total_timeout`, else `timeout`) ends, then returns the typed result, raises the request's typed error, or raises `RequestPendingError` with `request_id` (and the last `request` snapshot). It also raises `RequestPendingError`, never the poll's own error, when a poll fails (`429`, `5xx`, `404`, network): that error says nothing about the write. `error.timeout_error` is the original 504 (with `details["diagnosis"]`) and `error.idempotency_key` the key the write was sent with; resend only with that key. Check the request later:
 
 ```python
 from desktopaccountingapi import RequestPendingError
@@ -493,7 +500,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 - The Python, Node.js, .NET and Java SDKs and the [MCP server](https://github.com/DesktopAccountingAPI/quickbooks-desktop-mcp) are released together with the same version number, generated from the same API contract.
 - Every release is listed in [CHANGELOG.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CHANGELOG.md) and tagged `v<version>` on GitHub.
 - The API is versioned in its path (`/v1`). Within `v1` the API only adds operations, fields, enum values and error codes, and the SDK tolerates all of them, so older SDK versions keep working.
-- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:b5774d24bc81...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
+- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:79b06eb20083...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
 
 ## Support
 
@@ -507,7 +514,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 
 The toolchain is pinned in `mise.toml`. `mise run check` installs the pinned dev tools with uv and runs ruff, `mypy --strict`, the unit tests, the cross-language conformance suite (against `conformance/mock-server.mjs`), the example type checks, the README samples (`mypy --strict` on every Python block of this file, and the quickstart against the mock server) and a build plus clean install of the wheel. Set `UV_PYTHON=3.9` (or any supported version) to run it on another interpreter.
 
-To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.2.1"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
+To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.3.0"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
 
 ## License
 

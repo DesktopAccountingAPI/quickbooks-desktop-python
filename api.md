@@ -2,7 +2,7 @@
 
 # API reference
 
-Every method of `DesktopAccountingApi`, generated from the API contract (275 operations, contract `sha256:b5774d24bc81`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
+Every method of `DesktopAccountingApi`, generated from the API contract (275 operations, contract `sha256:79b06eb20083`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
 
 Every method also accepts the keyword arguments `timeout`, `total_timeout` and `max_retries`; QuickBooks Desktop operations accept `end_user_id` (or Conductor's `conductor_end_user_id`) and `server_timeout`, and writes accept `idempotency_key`. Non-paginated methods are available under `with_raw_response`, and async-capable ones under `enqueue` (returning a `RequestHandle`).
 
@@ -424,7 +424,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.reports`
 
 - `client.qbd.reports.aging(report_type=..., **params) -> Report`: `GET /v1/quickbooks-desktop/reports/aging`. Run an aging report.
-- `client.qbd.reports.budget_summary(report_type=..., **params) -> Report`: `GET /v1/quickbooks-desktop/reports/budget-summary`. Run a budget summary report.
+- `client.qbd.reports.budget_summary(report_type=..., fiscal_year=..., **params) -> Report`: `GET /v1/quickbooks-desktop/reports/budget-summary`. Run a budget summary report.
 - `client.qbd.reports.custom_detail(summarize_rows_by=..., include_columns=..., **params) -> Report`: `GET /v1/quickbooks-desktop/reports/custom-detail`. Run a custom detail report.
 - `client.qbd.reports.custom_summary(summarize_columns_by=..., summarize_rows_by=..., **params) -> Report`: `GET /v1/quickbooks-desktop/reports/custom-summary`. Run a custom summary report.
 - `client.qbd.reports.general_detail(report_type=..., **params) -> Report`: `GET /v1/quickbooks-desktop/reports/general-detail`. Run a general detail report.

@@ -26,10 +26,11 @@ class RawResponse(Generic[T]):
         customer = raw.parse()
     """
 
-    def __init__(self, http_response: httpx.Response, parsed: T) -> None:
+    def __init__(self, http_response: httpx.Response, parsed: T, idempotency_key: Optional[str] = None) -> None:
         self.http_response = http_response
         """The underlying ``httpx.Response`` (body already read)."""
         self._parsed = parsed
+        self._idempotency_key = idempotency_key
 
     @property
     def status_code(self) -> int:
@@ -46,6 +47,11 @@ class RawResponse(Generic[T]):
         """The ``Daapi-Request-Id`` response header."""
         value: Optional[str] = self.http_response.headers.get("daapi-request-id")
         return value
+
+    @property
+    def idempotency_key(self) -> Optional[str]:
+        """The ``Idempotency-Key`` the SDK sent for a write (generated unless you passed one), else ``None``."""
+        return self._idempotency_key
 
     @property
     def warnings(self) -> int:
