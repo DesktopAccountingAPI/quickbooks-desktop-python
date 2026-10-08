@@ -202,6 +202,96 @@ def _retry_fits(prep: _Prepared, delay: float) -> bool:
     return prep.total_deadline is None or time.monotonic() + delay < prep.total_deadline
 
 
+def _past_deadline(prep: _Prepared, request: httpx.Request) -> httpx.ReadTimeout:
+    return httpx.ReadTimeout("The call's total timeout ended while the response was arriving.", request=request)
+
+
+def _buffered(response: httpx.Response, chunks: list[bytes], request: httpx.Request) -> httpx.Response:
+    """A fully read copy of a streamed response (raw bytes; decoded as usual on access)."""
+    return httpx.Response(
+        response.status_code,
+        headers=response.headers,
+        content=b"".join(chunks),
+        request=request,
+        extensions=response.extensions,
+    )
+
+
+def _bounded_send(http: httpx.Client, prep: _Prepared, timeout: float) -> httpx.Response:
+    """One sync attempt under the call's total deadline, enforced cooperatively.
+
+    The request always goes through ``http.send`` (so auth flows, event hooks, cookies, proxies,
+    mounts and ``trust_env`` behave exactly as without a deadline). Blocking I/O cannot be canceled
+    from another thread, so the sync client bounds each phase instead: connect, read, write and pool
+    timeouts are the time left (``timeout`` never exceeds it; how httpx applies phase timeouts
+    depends on its transport), the deadline is checked once headers arrive, between body chunks and
+    after the body and its cleanup finish, and the response is closed when it passes.
+
+    Limits: one stalled read can overrun the deadline by at most its read budget; a server that
+    keeps trickling header bytes can extend an attempt; retries inside an injected transport (for
+    example ``HTTPTransport(retries=3)``), synchronous DNS and user auth, hook, transport or cleanup
+    code are not bounded; and a transport error that arrives after the deadline surfaces as
+    ``APIConnectionError`` rather than ``APITimeoutError``. The SDK never starts its own attempt or
+    retry after the deadline. The async client enforces a hard bound.
+    """
+    deadline = prep.total_deadline
+    assert deadline is not None
+    request = http.build_request(
+        prep.method,
+        prep.url,
+        params=tuple(prep.params),
+        content=prep.content,
+        headers=prep.headers,
+        timeout=httpx.Timeout(connect=timeout, read=timeout, write=timeout, pool=timeout),
+    )
+    response = http.send(request, stream=True)
+    try:
+        if time.monotonic() > deadline:
+            raise _past_deadline(prep, request)
+        if response.is_stream_consumed:
+            return response  # already in memory (for example a mock transport's response)
+        chunks: list[bytes] = []
+        for chunk in response.iter_raw():
+            chunks.append(chunk)
+            if time.monotonic() > deadline:
+                raise _past_deadline(prep, request)
+    finally:
+        response.close()
+    # httpx can keep reading after the last body chunk (chunked trailers, a slow EOF) and closing
+    # takes time too: check once more before returning a success (codex re-review round 6).
+    if time.monotonic() > deadline:
+        raise _past_deadline(prep, request)
+    return _buffered(response, chunks, request)
+
+
+async def _abounded_send(http: httpx.AsyncClient, prep: _Prepared, timeout: float) -> httpx.Response:
+    """Async ``_bounded_send``: the whole exchange also runs under ``asyncio.wait_for`` with the time left."""
+    deadline = prep.total_deadline
+    assert deadline is not None
+    request = http.build_request(
+        prep.method, prep.url, params=tuple(prep.params), content=prep.content, headers=prep.headers, timeout=timeout
+    )
+
+    async def exchange() -> httpx.Response:
+        response = await http.send(request, stream=True)
+        if response.is_stream_consumed:
+            return response  # already in memory (for example a mock transport's prebuilt response)
+        chunks: list[bytes] = []
+        try:
+            async for chunk in response.aiter_raw():
+                chunks.append(chunk)
+                if time.monotonic() > deadline:
+                    raise _past_deadline(prep, request)
+        finally:
+            await response.aclose()
+        return _buffered(response, chunks, request)
+
+    try:
+        return await asyncio.wait_for(exchange(), timeout=max(0.0, deadline - time.monotonic()))
+    except asyncio.TimeoutError as exc:
+        raise _past_deadline(prep, request) from exc
+
+
 def _connection_error(exc: httpx.TransportError) -> APIConnectionError:
     if isinstance(exc, httpx.TimeoutException):
         return APITimeoutError(f"The request timed out before a response arrived: {exc.__class__.__name__}.")
@@ -246,6 +336,12 @@ def settle_request(
     status = data.get("status")
     request_id = data.get("id") if isinstance(data.get("id"), str) else None
     if status == "succeeded":
+        error = data.get("error")
+        if isinstance(error, Mapping):
+            # QuickBooks answered, but the API could not map the answer (for example
+            # QBD_RESPONSE_UNREADABLE, outcome applied): raise that catalog error, never None.
+            code = error.get("httpStatusCode")
+            raise error_from_object(error, status=code if isinstance(code, int) else None, headers=headers, body=data)
         if data.get("result") is None and data.get("resultExpired"):
             raise DaapiError(f"Request {request_id} succeeded, but its result is past the retention period.")
         return True, cast_result(data.get("result"))
@@ -479,7 +575,9 @@ class _BaseClient:
             total_deadline=started + total if total is not None else None,
         )
 
-    def _prepare_poll(self, request_id: str, wait_seconds: Optional[int]) -> _Prepared:
+    def _prepare_poll(
+        self, request_id: str, wait_seconds: Optional[int], deadline: Optional[float] = None
+    ) -> _Prepared:
         params = [("waitSeconds", str(wait_seconds))] if wait_seconds is not None else []
         prep = self._prepare(
             _REQUESTS_RETRIEVE,
@@ -488,8 +586,9 @@ class _BaseClient:
             params=params,
             timeout=(wait_seconds or 0) + 10.0,
         )
-        # The caller's deadline already sized wait_seconds; the poll itself is not cut short.
-        return prep._replace(total_deadline=None)
+        # A long poll, its retries and their backoff stay inside the caller's deadline (codex
+        # review #15); a single retrieve has no deadline of its own.
+        return prep._replace(total_deadline=deadline)
 
     def _log_response(self, prep: _Prepared, response: httpx.Response, attempt: int) -> None:
         if self._logger.isEnabledFor(logging.DEBUG):
@@ -532,14 +631,39 @@ def _poll_wait_seconds(deadline: float) -> Optional[int]:
     return max(1, min(MAX_POLL_WAIT_SECONDS, math.ceil(remaining)))
 
 
-def _pending_error(request_id: str, last: Optional[Request]) -> RequestPendingError:
+def _pending_error(
+    request_id: str,
+    last: Optional[Request],
+    *,
+    timeout_error: Optional[APIError] = None,
+    idempotency_key: Optional[str] = None,
+    poll_error: Optional[DaapiError] = None,
+) -> RequestPendingError:
     status = f" (status {last.status})" if last is not None else ""
-    return RequestPendingError(
-        f"Request {request_id} is still running in QuickBooks{status} after the call's timeout. It was not "
-        f"resubmitted; check it later with client.requests.retrieve({request_id!r}, wait_seconds=60).",
+    why = f"checking it failed ({poll_error})" if poll_error is not None else "the call's time budget ended"
+    resend = f" or resend it only with Idempotency-Key {idempotency_key}" if idempotency_key else ""
+    error = RequestPendingError(
+        f"Request {request_id} is still running in QuickBooks{status}: {why}. It was not resubmitted; check it "
+        f"later with client.requests.retrieve({request_id!r}, wait_seconds=60){resend}.",
         request_id=request_id,
         request=last,
+        timeout_error=timeout_error,
+        poll_error=poll_error,
     )
+    error.idempotency_key = idempotency_key
+    if poll_error is None and timeout_error is not None:
+        error.__cause__ = timeout_error
+    return error
+
+
+E_ = TypeVar("E_", bound=DaapiError)
+
+
+def _with_key(error: E_, key: Optional[str]) -> E_:
+    """Attach the write's Idempotency-Key to an error raised for it (kept if already set)."""
+    if key is not None and error.idempotency_key is None:
+        error.idempotency_key = key
+    return error
 
 
 class SyncAPIClient(_BaseClient):
@@ -594,14 +718,17 @@ class SyncAPIClient(_BaseClient):
         attempt = 0
         while True:
             try:
-                response = self._http.request(
-                    prep.method,
-                    prep.url,
-                    params=tuple(prep.params),
-                    content=prep.content,
-                    headers=prep.headers,
-                    timeout=_attempt_timeout(prep),
-                )
+                if prep.total_deadline is not None:
+                    response = _bounded_send(self._http, prep, _attempt_timeout(prep))
+                else:
+                    response = self._http.request(
+                        prep.method,
+                        prep.url,
+                        params=tuple(prep.params),
+                        content=prep.content,
+                        headers=prep.headers,
+                        timeout=_attempt_timeout(prep),
+                    )
             except httpx.TransportError as exc:
                 delay = backoff_delay(attempt)
                 if attempt < prep.max_retries and _retryable_transport_error(exc) and _retry_fits(prep, delay):
@@ -624,25 +751,59 @@ class SyncAPIClient(_BaseClient):
             raise error
 
     def _execute(self, prep: _Prepared, cast_result: Callable[[Any], T]) -> tuple[T, httpx.Response]:
+        key = prep.headers.get("Idempotency-Key")
         try:
             response = self._send(prep)
         except APIError as error:
             request_id = _pending_request_id(error)
             if request_id is None:
+                _with_key(error, key)
                 raise
-            return self._poll(request_id, cast_result, prep.deadline)
-        return cast_result(_json_body(response)), response
+            return self._poll(request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key)
+        except DaapiError as error:
+            _with_key(error, key)
+            raise
+        try:
+            return cast_result(_json_body(response)), response
+        except DaapiError as error:
+            _with_key(error, key)
+            raise
 
-    def _poll(self, request_id: str, cast_result: Callable[[Any], T], deadline: float) -> tuple[T, httpx.Response]:
-        """Long-polls ``GET /v1/requests/{id}`` until the request ends or ``deadline`` passes."""
+    def _poll(
+        self,
+        request_id: str,
+        cast_result: Callable[[Any], T],
+        deadline: float,
+        *,
+        timeout_error: Optional[APIError] = None,
+        idempotency_key: Optional[str] = None,
+    ) -> tuple[T, httpx.Response]:
+        """Long-polls ``GET /v1/requests/{id}`` until the request ends or ``deadline`` passes.
+
+        A settled request returns its result or raises its own typed error. Anything else that ends
+        the wait (the deadline, or a poll that failed) raises :class:`RequestPendingError`: a failed
+        poll says nothing about the write, so its own retryable error is never raised."""
         last: Optional[Request] = None
         while True:
             wait = _poll_wait_seconds(deadline)
             if wait is None:
-                raise _pending_error(request_id, last)
-            response = self._send(self._prepare_poll(request_id, wait))
-            data = _json_body(response)
-            last = _parse_request(data)
+                raise _pending_error(request_id, last, timeout_error=timeout_error, idempotency_key=idempotency_key)
+            try:
+                response = self._send(self._prepare_poll(request_id, wait, deadline))
+                data = _json_body(response)
+                last = _parse_request(data)
+            except DaapiError as poll_error:
+                raise _pending_error(
+                    request_id,
+                    last,
+                    timeout_error=timeout_error,
+                    idempotency_key=idempotency_key,
+                    poll_error=poll_error,
+                ) from poll_error
+            # httpx timeouts are per I/O step, so a slow body can end after the deadline: an answer
+            # that arrives late is not returned, settled or not (codex re-review #15).
+            if time.monotonic() > deadline:
+                raise _pending_error(request_id, last, timeout_error=timeout_error, idempotency_key=idempotency_key)
             done, value = settle_request(data, cast_result, response.headers)
             if done:
                 return cast(T, value), response
@@ -654,7 +815,7 @@ class SyncAPIClient(_BaseClient):
         prep = self._prepare(op, method, path, **kwargs)
         value, response = self._execute(prep, cast_to)
         if raw:
-            return cast(T, RawResponse(response, value))
+            return cast(T, RawResponse(response, value, prep.headers.get("Idempotency-Key")))
         return value
 
     def _request_text(self, op: Op, method: str, path: str, *, xml: str, **kwargs: Any) -> str:
@@ -664,9 +825,13 @@ class SyncAPIClient(_BaseClient):
         prep = self._prepare(
             op, method, path, raw_body=xml, content_type="application/xml", accept="application/xml", **kwargs
         )
-        response = self._send(prep)
+        try:
+            response = self._send(prep)
+        except DaapiError as error:
+            _with_key(error, prep.headers.get("Idempotency-Key"))
+            raise
         if raw:
-            return cast(str, RawResponse(response, response.text))
+            return cast(str, RawResponse(response, response.text, prep.headers.get("Idempotency-Key")))
         return response.text
 
     def _enqueue(
@@ -675,10 +840,15 @@ class SyncAPIClient(_BaseClient):
         from ._handles import RequestHandle
 
         prep = self._prepare(op, method, path, respond_async=True, **kwargs)
-        response = self._send(prep)
-        data = _json_body(response)
+        key = prep.headers.get("Idempotency-Key")
+        try:
+            response = self._send(prep)
+            data = _json_body(response)
+        except DaapiError as error:
+            _with_key(error, key)
+            raise
         if response.status_code == 202:
-            return RequestHandle(self, _parse_request(data), cast_to)
+            return RequestHandle(self, _parse_request(data), cast_to, key)
         return RequestHandle._completed(self, response.headers.get("daapi-request-id", ""), cast_to(data), cast_to)
 
     def _paginate(
@@ -758,14 +928,17 @@ class AsyncAPIClient(_BaseClient):
         attempt = 0
         while True:
             try:
-                response = await self._http.request(
-                    prep.method,
-                    prep.url,
-                    params=tuple(prep.params),
-                    content=prep.content,
-                    headers=prep.headers,
-                    timeout=_attempt_timeout(prep),
-                )
+                if prep.total_deadline is not None:
+                    response = await _abounded_send(self._http, prep, _attempt_timeout(prep))
+                else:
+                    response = await self._http.request(
+                        prep.method,
+                        prep.url,
+                        params=tuple(prep.params),
+                        content=prep.content,
+                        headers=prep.headers,
+                        timeout=_attempt_timeout(prep),
+                    )
             except httpx.TransportError as exc:
                 delay = backoff_delay(attempt)
                 if attempt < prep.max_retries and _retryable_transport_error(exc) and _retry_fits(prep, delay):
@@ -788,27 +961,56 @@ class AsyncAPIClient(_BaseClient):
             raise error
 
     async def _execute(self, prep: _Prepared, cast_result: Callable[[Any], T]) -> tuple[T, httpx.Response]:
+        key = prep.headers.get("Idempotency-Key")
         try:
             response = await self._send(prep)
         except APIError as error:
             request_id = _pending_request_id(error)
             if request_id is None:
+                _with_key(error, key)
                 raise
-            return await self._poll(request_id, cast_result, prep.deadline)
-        return cast_result(_json_body(response)), response
+            return await self._poll(request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key)
+        except DaapiError as error:
+            _with_key(error, key)
+            raise
+        try:
+            return cast_result(_json_body(response)), response
+        except DaapiError as error:
+            _with_key(error, key)
+            raise
 
     async def _poll(
-        self, request_id: str, cast_result: Callable[[Any], T], deadline: float
+        self,
+        request_id: str,
+        cast_result: Callable[[Any], T],
+        deadline: float,
+        *,
+        timeout_error: Optional[APIError] = None,
+        idempotency_key: Optional[str] = None,
     ) -> tuple[T, httpx.Response]:
-        """Long-polls ``GET /v1/requests/{id}`` until the request ends or ``deadline`` passes."""
+        """Long-polls ``GET /v1/requests/{id}`` until the request ends or ``deadline`` passes (see the
+        synchronous client: a failed poll raises :class:`RequestPendingError`)."""
         last: Optional[Request] = None
         while True:
             wait = _poll_wait_seconds(deadline)
             if wait is None:
-                raise _pending_error(request_id, last)
-            response = await self._send(self._prepare_poll(request_id, wait))
-            data = _json_body(response)
-            last = _parse_request(data)
+                raise _pending_error(request_id, last, timeout_error=timeout_error, idempotency_key=idempotency_key)
+            try:
+                response = await self._send(self._prepare_poll(request_id, wait, deadline))
+                data = _json_body(response)
+                last = _parse_request(data)
+            except DaapiError as poll_error:
+                raise _pending_error(
+                    request_id,
+                    last,
+                    timeout_error=timeout_error,
+                    idempotency_key=idempotency_key,
+                    poll_error=poll_error,
+                ) from poll_error
+            # httpx timeouts are per I/O step, so a slow body can end after the deadline: an answer
+            # that arrives late is not returned, settled or not (codex re-review #15).
+            if time.monotonic() > deadline:
+                raise _pending_error(request_id, last, timeout_error=timeout_error, idempotency_key=idempotency_key)
             done, value = settle_request(data, cast_result, response.headers)
             if done:
                 return cast(T, value), response
@@ -820,7 +1022,7 @@ class AsyncAPIClient(_BaseClient):
         prep = self._prepare(op, method, path, **kwargs)
         value, response = await self._execute(prep, cast_to)
         if raw:
-            return cast(T, RawResponse(response, value))
+            return cast(T, RawResponse(response, value, prep.headers.get("Idempotency-Key")))
         return value
 
     async def _request_text(self, op: Op, method: str, path: str, *, xml: str, **kwargs: Any) -> str:
@@ -830,9 +1032,13 @@ class AsyncAPIClient(_BaseClient):
         prep = self._prepare(
             op, method, path, raw_body=xml, content_type="application/xml", accept="application/xml", **kwargs
         )
-        response = await self._send(prep)
+        try:
+            response = await self._send(prep)
+        except DaapiError as error:
+            _with_key(error, prep.headers.get("Idempotency-Key"))
+            raise
         if raw:
-            return cast(str, RawResponse(response, response.text))
+            return cast(str, RawResponse(response, response.text, prep.headers.get("Idempotency-Key")))
         return response.text
 
     async def _enqueue(
@@ -841,10 +1047,15 @@ class AsyncAPIClient(_BaseClient):
         from ._handles import AsyncRequestHandle
 
         prep = self._prepare(op, method, path, respond_async=True, **kwargs)
-        response = await self._send(prep)
-        data = _json_body(response)
+        key = prep.headers.get("Idempotency-Key")
+        try:
+            response = await self._send(prep)
+            data = _json_body(response)
+        except DaapiError as error:
+            _with_key(error, key)
+            raise
         if response.status_code == 202:
-            return AsyncRequestHandle(self, _parse_request(data), cast_to)
+            return AsyncRequestHandle(self, _parse_request(data), cast_to, key)
         return AsyncRequestHandle._completed(self, response.headers.get("daapi-request-id", ""), cast_to(data), cast_to)
 
     def _paginate(

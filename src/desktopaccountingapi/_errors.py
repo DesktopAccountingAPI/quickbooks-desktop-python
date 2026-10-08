@@ -60,6 +60,11 @@ class DaapiError(Exception):
     malformed API key, a QuickBooks Desktop call without an end user, an invalid argument.
     """
 
+    idempotency_key: Optional[str] = None
+    """The ``Idempotency-Key`` the SDK sent for the write that raised this error (generated once per
+    call unless you passed ``idempotency_key``), else ``None``. Resend a write whose outcome is
+    ``pending`` or ``unknown``, or that failed without a response, only with this key."""
+
     def __init__(self, message: str) -> None:
         super().__init__(message)
         self.message = message
@@ -311,12 +316,25 @@ class RequestPendingError(DaapiError):
     wait_seconds=...)`` or a ``request.*`` webhook.
     """
 
-    def __init__(self, message: str, *, request_id: str, request: Optional[Request] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        request_id: str,
+        request: Optional[Request] = None,
+        timeout_error: Optional[APIError] = None,
+        poll_error: Optional[DaapiError] = None,
+    ) -> None:
         super().__init__(message)
         self.request_id = request_id
         """The ``req_...`` ID of the pending request."""
         self.request = request
         """The last request snapshot seen, if any."""
+        self.timeout_error = timeout_error
+        """The ``504 QBD_REQUEST_TIMEOUT`` error (with ``details["diagnosis"]``) that started the wait, if any."""
+        self.poll_error = poll_error
+        """The error of the poll that failed, when waiting ended because a poll failed. It says nothing
+        about the write: never resend with a new key because of it."""
 
 
 class WebhookVerificationError(DaapiError):

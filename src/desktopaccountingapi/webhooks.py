@@ -54,6 +54,7 @@ class EventType:
     REQUEST_OUTCOME_RESOLVED: Final = "request.outcome_resolved"
     CONNECTION_SETUP_COMPLETED: Final = "connection.setup_completed"
     CONNECTION_STATUS_CHANGED: Final = "connection.status_changed"
+    CONNECTION_COMPANY_FILE_REMARKED: Final = "connection.company_file_remarked"
     WEBHOOK_TEST: Final = "webhook.test"
 
 

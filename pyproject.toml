@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "desktopaccountingapi-quickbooks-desktop"
-version = "0.2.1"
+version = "0.3.0"
 description = "Python client for Desktop Accounting API, the REST API for QuickBooks Desktop."
 readme = "README.md"
 license = "MIT"

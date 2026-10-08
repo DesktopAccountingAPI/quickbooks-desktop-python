@@ -317,6 +317,9 @@ def _error_fields(error: BaseException) -> dict[str, Any]:
         )
     if isinstance(error, daapi.RequestPendingError):
         fields["requestId"] = error.request_id
+        fields["timeoutErrorCode"] = error.timeout_error.code if error.timeout_error is not None else None
+    if isinstance(error, daapi.DaapiError):
+        fields["idempotencyKey"] = error.idempotency_key
     return fields
 
 
@@ -382,6 +385,11 @@ def check_outcome(scenario: Mapping[str, Any], seen: Observed) -> None:
                     assert error.details.get(dk) == dv, f"details.{dk}: {error.details.get(dk)!r} != {dv!r}"
                 continue
             assert key in fields, f"error field {key} is not exposed by {type(error).__name__}"
+            if key == "idempotencyKey" and value == "$uuid":
+                assert re.fullmatch(
+                    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", str(fields[key])
+                ), fields[key]
+                continue
             assert fields[key] == value, f"error {key}: {fields[key]!r} != {value!r}"
 
 
