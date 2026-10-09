@@ -15,12 +15,12 @@ The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.
 pip install desktopaccountingapi-quickbooks-desktop
 ```
 
-The current version is **0.5.1**. To pin it exactly:
+The current version is **0.5.2**. To pin it exactly:
 
 ```sh
-pip install "desktopaccountingapi-quickbooks-desktop==0.5.1"
-uv add "desktopaccountingapi-quickbooks-desktop==0.5.1"
-poetry add "desktopaccountingapi-quickbooks-desktop==0.5.1"
+pip install "desktopaccountingapi-quickbooks-desktop==0.5.2"
+uv add "desktopaccountingapi-quickbooks-desktop==0.5.2"
+poetry add "desktopaccountingapi-quickbooks-desktop==0.5.2"
 ```
 
 The distribution is `desktopaccountingapi-quickbooks-desktop`; the import package is `desktopaccountingapi`.
@@ -215,19 +215,25 @@ print(invoice.ref_number)
 
 Verify each webhook delivery with the endpoint's signing secret before you trust it. Pass the raw body, not parsed JSON:
 
-```python harness=webhook
+```python harness=none
 import os
+from collections.abc import Mapping
 
 from desktopaccountingapi import WebhookVerificationError, webhooks
 
-try:
-    event = webhooks.verify(raw_body, headers, os.environ["DAAPI_WEBHOOK_SECRET"])
-except WebhookVerificationError:
-    return 400
-if event.type == webhooks.EventType.REQUEST_SUCCEEDED:
-    print("request", event.data["id"], "succeeded")
-return 204
+
+def handle_webhook(raw_body: bytes, headers: Mapping[str, str]) -> int:
+    """Verifies one delivery and returns the HTTP status to answer with."""
+    try:
+        event = webhooks.verify(raw_body, headers, os.environ["DAAPI_WEBHOOK_SECRET"])
+    except WebhookVerificationError:
+        return 400
+    if event.type == webhooks.EventType.REQUEST_SUCCEEDED:
+        print("request", event.data["id"], "succeeded")
+    return 204
 ```
+
+Call `handle_webhook` from your web framework's route with the raw request body and headers, and answer with the status it returns.
 
 Create webhook endpoints and copy their `whsec_...` signing secrets in the dashboard under **Webhooks**. Details: [Async mode](#async-mode), [Webhooks](#webhooks), and the [webhooks guide](https://www.desktopaccountingapi.com/docs/guides/webhooks/).
 
@@ -421,7 +427,8 @@ Send qbXML as JSON, or raw qbXML, to an end user's QuickBooks:
 ```python
 result = client.end_users.passthrough("eu_01j9x4m6v4c8k2t7q0r5s3w1zb", {"CustomerQueryRq": {"MaxReturned": 5}})
 xml = client.end_users.passthrough_xml(
-    "eu_01j9x4m6v4c8k2t7q0r5s3w1zb", "<CustomerQueryRq><MaxReturned>5</MaxReturned></CustomerQueryRq>"
+    "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+    '<QBXMLMsgsRq onError="stopOnError"><CustomerQueryRq><MaxReturned>5</MaxReturned></CustomerQueryRq></QBXMLMsgsRq>',
 )
 print(result, xml)
 ```
@@ -500,11 +507,11 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 
 ## Versioning and changelog
 
-- This package follows [semantic versioning](https://semver.org/). Only a major version removes or renames anything in the SDK's public API.
+- This package follows [semantic versioning](https://semver.org/). Before 1.0, a minor version may contain breaking changes; they are marked Breaking in the [CHANGELOG](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CHANGELOG.md).
 - The Python, Node.js, .NET and Java SDKs and the [MCP server](https://github.com/DesktopAccountingAPI/quickbooks-desktop-mcp) are released together with the same version number, generated from the same API contract.
 - Every release is listed in [CHANGELOG.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CHANGELOG.md) and tagged `v<version>` on GitHub.
 - The API is versioned in its path (`/v1`). Within `v1` the API only adds operations, fields, enum values and error codes, and the SDK tolerates all of them, so older SDK versions keep working.
-- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:3d102b7bcecb...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
+- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:09aa9517f466...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
 
 ## Support
 
@@ -518,7 +525,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 
 The toolchain is pinned in `mise.toml`. `mise run check` installs the pinned dev tools with uv and runs ruff, `mypy --strict`, the unit tests, the cross-language conformance suite (against `conformance/mock-server.mjs`), the example type checks, the README samples (`mypy --strict` on every Python block of this file, and the quickstart against the mock server) and a build plus clean install of the wheel. Set `UV_PYTHON=3.9` (or any supported version) to run it on another interpreter.
 
-To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.5.1"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
+To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.5.2"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
 
 ## License
 

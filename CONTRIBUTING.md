@@ -16,7 +16,7 @@ Because of this, we usually cannot merge pull requests as they are. Open an issu
 
 Open an issue with:
 
-- the SDK version (`0.5.1` or later) and your Python version,
+- the SDK version (for example `0.5.2`) and your Python version,
 - the operation you called, for example `qbd.invoices.create`,
 - the `Daapi-Request-Id` of the failing call (every error exposes it as its request ID),
 - what you expected and what happened.

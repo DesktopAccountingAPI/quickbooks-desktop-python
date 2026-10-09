@@ -102,9 +102,23 @@ class _Slow(BaseHTTPRequestHandler):
             pass
 
 
+class _Server(ThreadingHTTPServer):
+    """Names its handler threads, so the thread-leak test can tell them apart from the client's on
+    every Python version: before 3.10 a handler thread is plain ``Thread-N``, without the
+    ``(process_request_thread)`` suffix that 3.10 added."""
+
+    def process_request(self, request: Any, client_address: Any) -> None:
+        threading.Thread(
+            target=self.process_request_thread, args=(request, client_address), name=SERVER_THREAD, daemon=True
+        ).start()
+
+
+SERVER_THREAD = "test-server-handler"
+
+
 @pytest.fixture
 def url() -> Iterator[str]:
-    server = ThreadingHTTPServer(("127.0.0.1", 0), _Slow)
+    server = _Server(("127.0.0.1", 0), _Slow)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
         yield f"http://127.0.0.1:{server.server_port}"
@@ -206,7 +220,7 @@ def test_a_timed_out_attempt_leaves_no_threads(url: str) -> None:
     finally:
         client.close()
     # The local test server's own handler threads may still be sending; only the client's count.
-    extra = [t.name for t in threading.enumerate() if t.ident not in before and "process_request_thread" not in t.name]
+    extra = [t.name for t in threading.enumerate() if t.ident not in before and t.name != SERVER_THREAD]
     assert extra == [], f"threads left behind: {extra}"
 
 
