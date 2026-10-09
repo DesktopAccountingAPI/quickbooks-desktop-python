@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.3 (2026-10-09)
+
+- Releases publish to PyPI through trusted publishing (GitHub OIDC); no PyPI token is used.
+
 ## 0.5.2 (2026-10-09)
 
 - Released in lockstep with the other Desktop Accounting API packages; no entries for this package.
