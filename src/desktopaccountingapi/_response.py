@@ -26,11 +26,18 @@ class RawResponse(Generic[T]):
         customer = raw.parse()
     """
 
-    def __init__(self, http_response: httpx.Response, parsed: T, idempotency_key: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        http_response: httpx.Response,
+        parsed: T,
+        idempotency_key: Optional[str] = None,
+        request_id: Optional[str] = None,
+    ) -> None:
         self.http_response = http_response
         """The underlying ``httpx.Response`` (body already read)."""
         self._parsed = parsed
         self._idempotency_key = idempotency_key
+        self._request_id = request_id
 
     @property
     def status_code(self) -> int:
@@ -44,7 +51,14 @@ class RawResponse(Generic[T]):
 
     @property
     def request_id(self) -> Optional[str]:
-        """The ``Daapi-Request-Id`` response header."""
+        """The ID of the request that produced the result.
+
+        Usually the ``Daapi-Request-Id`` response header. After the SDK long-polled a request that
+        timed out on the server (``504 QBD_REQUEST_TIMEOUT``), it is that request's ID, which
+        ``client.requests.retrieve`` finds; the final poll's own ID stays in
+        ``headers["daapi-request-id"]``."""
+        if self._request_id:
+            return self._request_id
         value: Optional[str] = self.http_response.headers.get("daapi-request-id")
         return value
 
