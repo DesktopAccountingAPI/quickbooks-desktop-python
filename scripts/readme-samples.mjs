@@ -7,6 +7,9 @@
 // - blocks marked `run=<scenario>` are also executed against the conformance mock server
 //   (conformance/fixtures/consumer.json) and must send exactly the scenario's requests and print
 //   its expected output;
+// - qbXML strings in those blocks (passthrough XML bodies) must have the root the API accepts,
+//   <QBXMLMsgsRq> or <QBXML><QBXMLMsgsRq>, with at least one request element (qbxml-samples.mjs), so a
+//   copied sample never gets 400 PASSTHROUGH_INVALID_QBXML;
 // - `json` blocks must parse;
 // - shell, console, text and http blocks are commands or wire examples and are listed, not run;
 // - any other block must be marked `skip`.
@@ -32,6 +35,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { delimiter, join, resolve } from "node:path";
+import { checkQbxmlSamples, qbxmlStrings } from "./qbxml-samples.mjs";
 
 const argv = process.argv.slice(2);
 const opt = (name, def) => {
@@ -307,6 +311,7 @@ const runs = [];
 const skipped = [];
 const commands = [];
 let json = 0;
+let qbxml = 0;
 let programs = 0;
 const failures = [];
 for (const b of blocks) {
@@ -331,6 +336,7 @@ for (const b of blocks) {
     failures.push(`README line ${b.line}: \`${b.lang || "(no language)"}\` block is neither checked nor marked skip`);
     continue;
   }
+  for (const q of checkQbxmlSamples(b.code)) failures.push(`README line ${b.line}: qbXML ${JSON.stringify(q.xml.slice(0, 80))} would be rejected by the API (400 PASSTHROUGH_INVALID_QBXML): ${q.problem}`);
   const name = backend.name(b);
   let { source, wrapped } = render(b, name);
   if (lang === "java") {
@@ -346,6 +352,7 @@ for (const b of blocks) {
   writeFileSync(join(out, file), `${lang === "python" ? "#" : "//"} README.md line ${b.line}\n${source}`);
   files.push(file);
   if (b.attrs.run) runs.push({ block: b, file });
+  qbxml += qbxmlStrings(b.code).length;
 }
 if (programs > 1) failures.push("C#: at most one sample may use harness=none (top-level statements); wrap the others");
 if (files.length === 0) failures.push(`no ${lang} samples found in ${readme}`);
@@ -354,7 +361,7 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`readme-samples: ${files.length} ${lang} samples, ${json} json, ${commands.length} command blocks, ${skipped.length} skipped -> ${out}`);
+console.log(`readme-samples: ${files.length} ${lang} samples (${qbxml} qbXML strings valid for passthrough), ${json} json, ${commands.length} command blocks, ${skipped.length} skipped -> ${out}`);
 for (const s of skipped) console.log(`  skipped: line ${s.line} (${s.lang})`);
 try {
   backend.compile(files, programs > 0);
