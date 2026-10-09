@@ -129,7 +129,7 @@ def verify_signature(
 
     Raises :class:`WebhookVerificationError` on any problem. ``headers`` may be any mapping
     (names are matched case-insensitively). ``secret`` is the endpoint's signing secret, with or
-    without the ``whsec_`` prefix. ``now`` returns the current Unix time (tests can inject a clock).
+    without the ``whsec_`` prefix. ``now`` returns the current Unix time in seconds, like ``time.time`` (tests can inject a clock).
     """
     msg_id = _header(headers, "webhook-id")
     timestamp_text = _header(headers, "webhook-timestamp")

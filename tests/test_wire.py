@@ -19,9 +19,18 @@ from desktopaccountingapi._wire import (
 from desktopaccountingapi.types import (
     CustomFieldCreateInput,
     Invoice,
+    InvoiceLine,
     InvoiceLineCreateInput,
     Reference,
 )
+
+
+def test_response_rates_and_prices_are_decimals() -> None:
+    # SDK-E2E D4: response rates carry the decimal pattern, so they parse to Decimal like the inputs.
+    line = InvoiceLine.from_wire({"id": "1", "rate": "12.50000", "ratePercent": "7.5"})
+    assert line.rate == Decimal("12.50000") and isinstance(line.rate, Decimal)
+    assert str(line.rate) == "12.50000"
+    assert line.rate_percent == Decimal("7.5")
 
 
 def test_decimal_preserves_scale() -> None:
