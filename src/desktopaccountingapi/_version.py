@@ -1,6 +1,6 @@
 """SDK version and the contract it was generated from."""
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 
 API_VERSION = "1.0.0"
 """API version (contract ``info.version``) this SDK release was generated from."""

@@ -15,12 +15,12 @@ The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.
 pip install desktopaccountingapi-quickbooks-desktop
 ```
 
-The current version is **0.5.2**. To pin it exactly:
+The current version is **0.5.3**. To pin it exactly:
 
 ```sh
-pip install "desktopaccountingapi-quickbooks-desktop==0.5.2"
-uv add "desktopaccountingapi-quickbooks-desktop==0.5.2"
-poetry add "desktopaccountingapi-quickbooks-desktop==0.5.2"
+pip install "desktopaccountingapi-quickbooks-desktop==0.5.3"
+uv add "desktopaccountingapi-quickbooks-desktop==0.5.3"
+poetry add "desktopaccountingapi-quickbooks-desktop==0.5.3"
 ```
 
 The distribution is `desktopaccountingapi-quickbooks-desktop`; the import package is `desktopaccountingapi`.
@@ -525,7 +525,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 
 The toolchain is pinned in `mise.toml`. `mise run check` installs the pinned dev tools with uv and runs ruff, `mypy --strict`, the unit tests, the cross-language conformance suite (against `conformance/mock-server.mjs`), the example type checks, the README samples (`mypy --strict` on every Python block of this file, and the quickstart against the mock server) and a build plus clean install of the wheel. Set `UV_PYTHON=3.9` (or any supported version) to run it on another interpreter.
 
-To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.5.2"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
+To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.5.3"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
 
 ## License
 
