@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.4 (2026-10-09)
+
+- New error code `ROUTE_NOT_FOUND` (`ErrorCode.ROUTE_NOT_FOUND`): a `404` for a method and path the API has no endpoint for, such as the API root. These answered `RESOURCE_MISSING`, whose cause describes a missing ID.
+
 ## 0.5.3 (2026-10-09)
 
 - Releases publish to PyPI through trusted publishing (GitHub OIDC); no PyPI token is used.
