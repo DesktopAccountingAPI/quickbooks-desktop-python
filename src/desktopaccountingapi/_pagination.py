@@ -35,7 +35,14 @@ _READ_AHEAD_AFTER = 2.0
 class CursorPage(Generic[T]):
     """One page of a cursor list."""
 
-    def __init__(self, data: list[T], raw: Mapping[str, Any], raw_items: list[Any], response: httpx.Response) -> None:
+    def __init__(
+        self,
+        data: list[T],
+        raw: Mapping[str, Any],
+        raw_items: list[Any],
+        response: httpx.Response,
+        request_id: Optional[str] = None,
+    ) -> None:
         self.data = data
         """The items on this page."""
         next_cursor = raw.get("nextCursor")
@@ -49,8 +56,9 @@ class CursorPage(Generic[T]):
         expires = parse_datetime(raw.get("cursorExpiresAt"))
         self.cursor_expires_at: Optional[_dt.datetime] = expires if isinstance(expires, _dt.datetime) else None
         """The server's estimate of when the cursor expires if no continue request arrives."""
-        self.request_id: Optional[str] = response.headers.get("daapi-request-id")
-        """``Daapi-Request-Id`` of the response that delivered this page."""
+        self.request_id: Optional[str] = request_id or response.headers.get("daapi-request-id")
+        """ID of the request that delivered this page: the response's ``Daapi-Request-Id``, or after a
+        long poll the timed-out request's ID."""
         self._raw_items = raw_items
 
     def __iter__(self) -> Iterator[T]:
@@ -71,12 +79,17 @@ class _Progress:
         self.last: Any = None
 
 
-def _build_page(data: Any, response: httpx.Response, parse_item: Callable[[Mapping[str, Any]], T]) -> CursorPage[T]:
+def _build_page(
+    data: Any,
+    response: httpx.Response,
+    parse_item: Callable[[Mapping[str, Any]], T],
+    request_id: Optional[str] = None,
+) -> CursorPage[T]:
     if not isinstance(data, Mapping):
         raise DaapiError("Expected a list object from the API.")
     raw_items = data.get("data")
     items = raw_items if isinstance(raw_items, list) else []
-    return CursorPage([parse_item(i) for i in items], data, items, response)
+    return CursorPage([parse_item(i) for i in items], data, items, response, request_id)
 
 
 def _record_expiry(error: CursorExpiredError, progress: _Progress, pages: int) -> None:
@@ -139,8 +152,8 @@ class CursorPager(_PagerBase[T]):
         self._client = client
 
     def _fetch(self, params: list[tuple[str, str]]) -> CursorPage[T]:
-        data, response = self._client._fetch_page_data(self._op, self._path, params, self._options)
-        return _build_page(data, response, self._parse_item)
+        data, response, request_id = self._client._fetch_page_data(self._op, self._path, params, self._options)
+        return _build_page(data, response, self._parse_item, request_id)
 
     def first_page(self) -> CursorPage[T]:
         """Fetches the first page only."""
@@ -260,8 +273,8 @@ class AsyncCursorPager(_PagerBase[T]):
         self._client = client
 
     async def _fetch(self, params: list[tuple[str, str]]) -> CursorPage[T]:
-        data, response = await self._client._fetch_page_data(self._op, self._path, params, self._options)
-        return _build_page(data, response, self._parse_item)
+        data, response, request_id = await self._client._fetch_page_data(self._op, self._path, params, self._options)
+        return _build_page(data, response, self._parse_item, request_id)
 
     async def first_page(self) -> CursorPage[T]:
         """Fetches the first page only."""

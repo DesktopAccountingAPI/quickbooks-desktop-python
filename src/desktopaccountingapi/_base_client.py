@@ -776,9 +776,12 @@ class SyncAPIClient(_BaseClient):
         prep: _Prepared,
         cast_result: Callable[[Any], T],
         read: Callable[[httpx.Response], Any] = _json_body,
-    ) -> tuple[T, httpx.Response]:
+    ) -> tuple[T, httpx.Response, Optional[str]]:
         """Sends a sync-mode call. After ``504 QBD_REQUEST_TIMEOUT`` it long-polls the request instead.
 
+        Returns the value, the final HTTP response and the ID of the request that produced the
+        value: the response's ``Daapi-Request-Id``, or after a long poll the timed-out request's ID
+        (the poll's own ID stays in the response headers).
         ``read`` turns a direct 2xx answer into the value for ``cast_result`` (JSON, or text for XML).
         Every error raised here, including one from polling (for example ``OutcomeUnknownError``),
         carries the write's Idempotency-Key."""
@@ -790,8 +793,11 @@ class SyncAPIClient(_BaseClient):
                 request_id = _pending_request_id(error)
                 if request_id is None:
                     raise
-                return self._poll(request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key)
-            return cast_result(read(response)), response
+                value, polled = self._poll(
+                    request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key
+                )
+                return value, polled, request_id
+            return cast_result(read(response)), response, response.headers.get("daapi-request-id")
         except DaapiError as error:
             _with_key(error, key)
             raise
@@ -840,9 +846,9 @@ class SyncAPIClient(_BaseClient):
         if raw:
             _raw_response_mode.set(False)
         prep = self._prepare(op, method, path, **kwargs)
-        value, response = self._execute(prep, cast_to)
+        value, response, request_id = self._execute(prep, cast_to)
         if raw:
-            return cast(T, RawResponse(response, value, prep.headers.get("Idempotency-Key")))
+            return cast(T, RawResponse(response, value, prep.headers.get("Idempotency-Key"), request_id))
         return value
 
     def _request_text(self, op: Op, method: str, path: str, *, xml: str, **kwargs: Any) -> str:
@@ -854,9 +860,9 @@ class SyncAPIClient(_BaseClient):
         )
         # A 504 QBD_REQUEST_TIMEOUT is long-polled exactly like a JSON call; the collected result is
         # the qbXML response text.
-        text, response = self._execute(prep, _xml_result, read=_response_text)
+        text, response, request_id = self._execute(prep, _xml_result, read=_response_text)
         if raw:
-            return cast(str, RawResponse(response, text, prep.headers.get("Idempotency-Key")))
+            return cast(str, RawResponse(response, text, prep.headers.get("Idempotency-Key"), request_id))
         return text
 
     def _enqueue(
@@ -891,7 +897,7 @@ class SyncAPIClient(_BaseClient):
 
     def _fetch_page_data(
         self, op: Op, path: str, params: list[tuple[str, str]], options: Mapping[str, Any]
-    ) -> tuple[Any, httpx.Response]:
+    ) -> tuple[Any, httpx.Response, Optional[str]]:
         prep = self._prepare(op, "GET", path, params=params, **options)
         return self._execute(prep, _identity)
 
@@ -995,9 +1001,12 @@ class AsyncAPIClient(_BaseClient):
         prep: _Prepared,
         cast_result: Callable[[Any], T],
         read: Callable[[httpx.Response], Any] = _json_body,
-    ) -> tuple[T, httpx.Response]:
+    ) -> tuple[T, httpx.Response, Optional[str]]:
         """Sends a sync-mode call. After ``504 QBD_REQUEST_TIMEOUT`` it long-polls the request instead.
 
+        Returns the value, the final HTTP response and the ID of the request that produced the
+        value: the response's ``Daapi-Request-Id``, or after a long poll the timed-out request's ID
+        (the poll's own ID stays in the response headers).
         ``read`` turns a direct 2xx answer into the value for ``cast_result`` (JSON, or text for XML).
         Every error raised here, including one from polling (for example ``OutcomeUnknownError``),
         carries the write's Idempotency-Key."""
@@ -1009,10 +1018,11 @@ class AsyncAPIClient(_BaseClient):
                 request_id = _pending_request_id(error)
                 if request_id is None:
                     raise
-                return await self._poll(
+                value, polled = await self._poll(
                     request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key
                 )
-            return cast_result(read(response)), response
+                return value, polled, request_id
+            return cast_result(read(response)), response, response.headers.get("daapi-request-id")
         except DaapiError as error:
             _with_key(error, key)
             raise
@@ -1058,9 +1068,9 @@ class AsyncAPIClient(_BaseClient):
         if raw:
             _raw_response_mode.set(False)
         prep = self._prepare(op, method, path, **kwargs)
-        value, response = await self._execute(prep, cast_to)
+        value, response, request_id = await self._execute(prep, cast_to)
         if raw:
-            return cast(T, RawResponse(response, value, prep.headers.get("Idempotency-Key")))
+            return cast(T, RawResponse(response, value, prep.headers.get("Idempotency-Key"), request_id))
         return value
 
     async def _request_text(self, op: Op, method: str, path: str, *, xml: str, **kwargs: Any) -> str:
@@ -1072,9 +1082,9 @@ class AsyncAPIClient(_BaseClient):
         )
         # A 504 QBD_REQUEST_TIMEOUT is long-polled exactly like a JSON call; the collected result is
         # the qbXML response text.
-        text, response = await self._execute(prep, _xml_result, read=_response_text)
+        text, response, request_id = await self._execute(prep, _xml_result, read=_response_text)
         if raw:
-            return cast(str, RawResponse(response, text, prep.headers.get("Idempotency-Key")))
+            return cast(str, RawResponse(response, text, prep.headers.get("Idempotency-Key"), request_id))
         return text
 
     async def _enqueue(
@@ -1109,7 +1119,7 @@ class AsyncAPIClient(_BaseClient):
 
     async def _fetch_page_data(
         self, op: Op, path: str, params: list[tuple[str, str]], options: Mapping[str, Any]
-    ) -> tuple[Any, httpx.Response]:
+    ) -> tuple[Any, httpx.Response, Optional[str]]:
         prep = self._prepare(op, "GET", path, params=params, **options)
         return await self._execute(prep, _identity)
 
