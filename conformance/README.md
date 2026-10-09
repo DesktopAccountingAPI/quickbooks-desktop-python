@@ -30,12 +30,13 @@ node conformance/mock-server.mjs [--fixtures conformance/fixtures/scenarios.json
   "client": { "maxRetries": 2 },        // optional overrides of the top-level defaultClient
   "call": {
     "op": "qbd.invoices.create",        // operation ID
-    "kind": "call",                     // call | iterate | firstPage | withResponse | enqueue
+    "kind": "call",                     // call | iterate | firstPage | withResponse | enqueue | xml
     "path": { "id": "..." },            // path parameters by wire name
     "params": { ... },                  // query parameters or JSON body, wire (camelCase) names
     "options": { "idempotencyKey": "...", "endUserId": "...", "conductorEndUserId": "...", "timeoutMs": 500, "serverTimeoutSeconds": 30 },
     "take": 2,                          // iterate only: stop (break) after this many items
-    "wait": { "timeoutMs": 20000 }      // enqueue only: then call handle.wait()
+    "wait": { "timeoutMs": 20000 },     // enqueue only: then call handle.wait()
+    "xml": "<QBXMLMsgsRq ...>"          // xml only: the qbXML request text
   },
   "exchanges": [ { "expect": { ... }, "respond": { ... }, "repeat": false } ],
   "outcome": { ... }
@@ -66,6 +67,7 @@ If building the client throws (invalid key), handle the error as the call's erro
 | `firstPage` | Fetches only the first page, without iterating. |
 | `withResponse` | Calls through the SDK's raw-response access and keeps the result plus status and headers. |
 | `enqueue` | Calls the operation in async mode (`Prefer: respond-async`), keeps the request handle, then calls `handle.wait()` with `wait.timeoutMs`. |
+| `xml` | Calls the operation's raw-qbXML variant (Node.js `passthroughXml`, Python `passthrough_xml`, .NET `PassthroughXmlAsync`, Java `passthroughXml`) with the path parameters and `call.xml`, and keeps the returned text. |
 
 Operations and parameter shapes used by the fixtures:
 
@@ -89,6 +91,7 @@ Convert params to the SDK's native types. Decimal strings become the native deci
 - `query`: if present, the exact set of query keys. A value is either an array of strings (all repeated values, in order) or a matcher.
 - `headers`: only the listed headers are checked, with case-insensitive names. A value is a literal string or a matcher.
 - `body`: if present, deep JSON equality.
+- `rawBody`: if present, the exact request body text (XML calls).
 
 Matchers:
 
@@ -114,6 +117,7 @@ Matchers combine, for example `{ "$uuid": true, "$capture": "key" }`.
 The runner compares only the keys that are present.
 
 - `result`: map of dotted wire paths to expected JSON values, for example `{ "id": "7-1700000000", "subtotal": "105.50" }`. Serialize the SDK's typed result back to wire JSON with the SDK's own serialization, then compare. Decimals must come out as the same decimal string.
+- `text`: the exact text returned by an `xml` call.
 - `items`: the `id`s of the items yielded by `iterate`, in order.
 - `page`: `ids`, `nextCursor`, `hasMore`, `remainingCount` of the first page.
 - `handle`: `id` and `status` of the request handle returned by `enqueue`.

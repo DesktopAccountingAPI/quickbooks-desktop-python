@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A read that hits the server timeout (`504 QBD_REQUEST_TIMEOUT` with outcome `not_applicable`) is long-polled like a write: the SDK waits on `GET /v1/requests/{id}` until the call's deadline and returns the result or raises `RequestPendingError`, instead of raising the 504 at once (sync and async clients). The rule is the same in every SDK: HTTP 504, code `QBD_REQUEST_TIMEOUT` and a `details.requestId`, whatever the outcome. Such a 504 is never retried.
+- `end_users.passthrough_xml()` collects a request that hits the server timeout the same way and returns its qbXML result text, instead of raising the 504 (sync and async clients).
+- An error that ends the wait for a timed-out write (for example `OutcomeUnknownError` from a request that ended `outcome_unknown`) carries the write's `idempotency_key`; it was `None`.
+- Cursor lists accept `cursor=`, so a list can resume from a stored `next_cursor`, for example across HTTP requests: `client.qbd.invoices.list(cursor=saved_cursor, limit=100).first_page()`. Iteration continues from that page.
+- **Breaking (types):** Response prices, rates and percentages (for example `QbdInvoiceLine.rate`, `QbdSalesOrPurchaseDetail.price`, `ratePercent`) carry the same decimal pattern as their inputs and as amounts, so they are `decimal.Decimal` instead of `str`.
+- The `now=` option of `webhooks.verify` and `verify_signature` is documented as Unix seconds (like `time.time`).
 - **Breaking:** `qbd.reports.budget_summary()` now requires the `fiscal_year` keyword argument (sync and async clients). The API always rejected a budget report without it (`400 INVALID_PARAMETER`, `param: "fiscalYear"`), so no working call changes behavior; type checkers flag calls that omit it, and such calls raise `TypeError`. Pass the fiscal year, for example `budget_summary(report_type="profit_and_loss_budget_overview", fiscal_year=2026)`.
 - `WebhookEventType.CONNECTION_COMPANY_FILE_REMARKED` (`connection.company_file_remarked`): the marker that identifies a connection's company file was created, written back after the file lost it (for example a restored backup) or adopted from the file; `data["reason"]` is `marker_created`, `marker_restored` or `marker_adopted`.
 - After `504 QBD_REQUEST_TIMEOUT`, any failure while waiting for the request (a poll answered `429`, `5xx` or `404`, a network error or a timeout) raises `RequestPendingError` with `request_id`, `timeout_error` (the 504), `poll_error` and `idempotency_key`. It never surfaces the poll's own retryable error, which read as "safe to resend" and could duplicate a write. `RequestHandle.wait()` follows the same rule (sync and async clients).
@@ -23,7 +29,7 @@ Easier porting from Conductor's `conductor-py`; see "Porting from Conductor" in 
 
 ## 0.1.0
 
-First release, generated from API version 1.0.0 (contract `sha256:68a0d76d6b51`, 275 operations).
+First release, generated from API version 1.0.0 (contract `sha256:1fc5496cc47b`, 275 operations).
 
 - Synchronous `DesktopAccountingApi` and asyncio `AsyncDesktopAccountingApi` clients on httpx, for Python 3.9 to 3.14.
 - Every QuickBooks Desktop and platform operation as a typed method (`client.qbd.invoices.create(...)`, `client.end_users.passthrough(...)`), with request and response models in `desktopaccountingapi.types`.

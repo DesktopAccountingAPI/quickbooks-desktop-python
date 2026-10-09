@@ -299,13 +299,29 @@ def _connection_error(exc: httpx.TransportError) -> APIConnectionError:
 
 
 def _pending_request_id(error: APIError) -> Optional[str]:
-    """The request to long-poll after ``504 QBD_REQUEST_TIMEOUT`` (outcome pending), else None."""
-    if error.code != "QBD_REQUEST_TIMEOUT" or error.outcome != "pending":
+    """The request to long-poll after ``504 QBD_REQUEST_TIMEOUT``, else None.
+
+    The request was sent and keeps running, whatever its ``outcome``: ``pending`` for a write,
+    ``not_applicable`` for a read. Same rule as every SDK: HTTP 504, code ``QBD_REQUEST_TIMEOUT``
+    and a non-empty ``details.requestId``.
+    """
+    if error.status != 504 or error.code != "QBD_REQUEST_TIMEOUT":
         return None
     request_id = error.details.get("requestId")
-    if isinstance(request_id, str) and request_id:
-        return request_id
-    return error.request_id
+    return request_id if isinstance(request_id, str) and request_id else None
+
+
+def _response_text(response: httpx.Response) -> str:
+    return response.text
+
+
+def _xml_result(value: Any) -> str:
+    """The qbXML text of an XML call: the response body, or a collected request's ``result``."""
+    if isinstance(value, str):
+        return value
+    if value is None:
+        raise DaapiError("The XML request succeeded without a qbXML result.")
+    return json.dumps(value)
 
 
 def _json_body(response: httpx.Response) -> Any:
@@ -741,7 +757,12 @@ class SyncAPIClient(_BaseClient):
             if 200 <= response.status_code < 300:
                 return response
             error = error_from_response(response.status_code, response.headers, response.content)
-            if attempt < prep.max_retries and should_retry(response.status_code, response.headers, error):
+            # A request still running after the server timeout is long-polled, never resent.
+            if (
+                _pending_request_id(error) is None
+                and attempt < prep.max_retries
+                and should_retry(response.status_code, response.headers, error)
+            ):
                 delay = backoff_delay(attempt, response.headers)
                 if _retry_fits(prep, delay):
                     self._log_retry(prep, f"HTTP {response.status_code}", delay, attempt)
@@ -750,21 +771,27 @@ class SyncAPIClient(_BaseClient):
                     continue
             raise error
 
-    def _execute(self, prep: _Prepared, cast_result: Callable[[Any], T]) -> tuple[T, httpx.Response]:
+    def _execute(
+        self,
+        prep: _Prepared,
+        cast_result: Callable[[Any], T],
+        read: Callable[[httpx.Response], Any] = _json_body,
+    ) -> tuple[T, httpx.Response]:
+        """Sends a sync-mode call. After ``504 QBD_REQUEST_TIMEOUT`` it long-polls the request instead.
+
+        ``read`` turns a direct 2xx answer into the value for ``cast_result`` (JSON, or text for XML).
+        Every error raised here, including one from polling (for example ``OutcomeUnknownError``),
+        carries the write's Idempotency-Key."""
         key = prep.headers.get("Idempotency-Key")
         try:
-            response = self._send(prep)
-        except APIError as error:
-            request_id = _pending_request_id(error)
-            if request_id is None:
-                _with_key(error, key)
-                raise
-            return self._poll(request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key)
-        except DaapiError as error:
-            _with_key(error, key)
-            raise
-        try:
-            return cast_result(_json_body(response)), response
+            try:
+                response = self._send(prep)
+            except APIError as error:
+                request_id = _pending_request_id(error)
+                if request_id is None:
+                    raise
+                return self._poll(request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key)
+            return cast_result(read(response)), response
         except DaapiError as error:
             _with_key(error, key)
             raise
@@ -825,14 +852,12 @@ class SyncAPIClient(_BaseClient):
         prep = self._prepare(
             op, method, path, raw_body=xml, content_type="application/xml", accept="application/xml", **kwargs
         )
-        try:
-            response = self._send(prep)
-        except DaapiError as error:
-            _with_key(error, prep.headers.get("Idempotency-Key"))
-            raise
+        # A 504 QBD_REQUEST_TIMEOUT is long-polled exactly like a JSON call; the collected result is
+        # the qbXML response text.
+        text, response = self._execute(prep, _xml_result, read=_response_text)
         if raw:
-            return cast(str, RawResponse(response, response.text, prep.headers.get("Idempotency-Key")))
-        return response.text
+            return cast(str, RawResponse(response, text, prep.headers.get("Idempotency-Key")))
+        return text
 
     def _enqueue(
         self, op: Op, method: str, path: str, *, cast_to: Callable[[Any], T], **kwargs: Any
@@ -951,7 +976,12 @@ class AsyncAPIClient(_BaseClient):
             if 200 <= response.status_code < 300:
                 return response
             error = error_from_response(response.status_code, response.headers, response.content)
-            if attempt < prep.max_retries and should_retry(response.status_code, response.headers, error):
+            # A request still running after the server timeout is long-polled, never resent.
+            if (
+                _pending_request_id(error) is None
+                and attempt < prep.max_retries
+                and should_retry(response.status_code, response.headers, error)
+            ):
                 delay = backoff_delay(attempt, response.headers)
                 if _retry_fits(prep, delay):
                     self._log_retry(prep, f"HTTP {response.status_code}", delay, attempt)
@@ -960,21 +990,29 @@ class AsyncAPIClient(_BaseClient):
                     continue
             raise error
 
-    async def _execute(self, prep: _Prepared, cast_result: Callable[[Any], T]) -> tuple[T, httpx.Response]:
+    async def _execute(
+        self,
+        prep: _Prepared,
+        cast_result: Callable[[Any], T],
+        read: Callable[[httpx.Response], Any] = _json_body,
+    ) -> tuple[T, httpx.Response]:
+        """Sends a sync-mode call. After ``504 QBD_REQUEST_TIMEOUT`` it long-polls the request instead.
+
+        ``read`` turns a direct 2xx answer into the value for ``cast_result`` (JSON, or text for XML).
+        Every error raised here, including one from polling (for example ``OutcomeUnknownError``),
+        carries the write's Idempotency-Key."""
         key = prep.headers.get("Idempotency-Key")
         try:
-            response = await self._send(prep)
-        except APIError as error:
-            request_id = _pending_request_id(error)
-            if request_id is None:
-                _with_key(error, key)
-                raise
-            return await self._poll(request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key)
-        except DaapiError as error:
-            _with_key(error, key)
-            raise
-        try:
-            return cast_result(_json_body(response)), response
+            try:
+                response = await self._send(prep)
+            except APIError as error:
+                request_id = _pending_request_id(error)
+                if request_id is None:
+                    raise
+                return await self._poll(
+                    request_id, cast_result, prep.deadline, timeout_error=error, idempotency_key=key
+                )
+            return cast_result(read(response)), response
         except DaapiError as error:
             _with_key(error, key)
             raise
@@ -1032,14 +1070,12 @@ class AsyncAPIClient(_BaseClient):
         prep = self._prepare(
             op, method, path, raw_body=xml, content_type="application/xml", accept="application/xml", **kwargs
         )
-        try:
-            response = await self._send(prep)
-        except DaapiError as error:
-            _with_key(error, prep.headers.get("Idempotency-Key"))
-            raise
+        # A 504 QBD_REQUEST_TIMEOUT is long-polled exactly like a JSON call; the collected result is
+        # the qbXML response text.
+        text, response = await self._execute(prep, _xml_result, read=_response_text)
         if raw:
-            return cast(str, RawResponse(response, response.text, prep.headers.get("Idempotency-Key")))
-        return response.text
+            return cast(str, RawResponse(response, text, prep.headers.get("Idempotency-Key")))
+        return text
 
     async def _enqueue(
         self, op: Op, method: str, path: str, *, cast_to: Callable[[Any], T], **kwargs: Any

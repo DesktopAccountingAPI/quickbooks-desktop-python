@@ -169,6 +169,7 @@ def _client_kwargs(scenario: Mapping[str, Any], url: str) -> dict[str, Any]:
 class Observed:
     def __init__(self) -> None:
         self.result: Any = None
+        self.text: Optional[str] = None
         self.items: Optional[list[Any]] = None
         self.page: Optional[daapi.CursorPage[Any]] = None
         self.handle: Any = None
@@ -204,6 +205,10 @@ def run_sync(scenario: Mapping[str, Any], url: str) -> Observed:
                 method = getattr(resource, name)
                 args, kwargs = _call_args(method, call)
                 seen.page = method(*args, **kwargs).first_page()
+            elif kind == "xml":
+                method = getattr(resource, f"{name}_xml")
+                args, kwargs = _call_args(method, call)
+                seen.text = method(*args, call["xml"], **kwargs)
             elif kind == "withResponse":
                 method = getattr(resource.with_raw_response, name)
                 args, kwargs = _call_args(getattr(resource, name), call)
@@ -249,6 +254,10 @@ async def _run_async(scenario: Mapping[str, Any], url: str) -> Observed:
                 method = getattr(resource, name)
                 args, kwargs = _call_args(method, call)
                 seen.page = await method(*args, **kwargs).first_page()
+            elif kind == "xml":
+                method = getattr(resource, f"{name}_xml")
+                args, kwargs = _call_args(method, call)
+                seen.text = await method(*args, call["xml"], **kwargs)
             elif kind == "withResponse":
                 method = getattr(resource.with_raw_response, name)
                 args, kwargs = _call_args(getattr(resource, name), call)
@@ -333,6 +342,8 @@ def check_outcome(scenario: Mapping[str, Any], seen: Observed) -> None:
         wire = _wire(seen.result)
         for path, value in outcome["result"].items():
             assert _dotted(wire, path) == value, f"result {path}: {_dotted(wire, path)!r} != {value!r}"
+    if "text" in outcome:
+        assert seen.text == outcome["text"]
     if "items" in outcome:
         assert seen.items is not None
         assert [item.id for item in seen.items] == outcome["items"]

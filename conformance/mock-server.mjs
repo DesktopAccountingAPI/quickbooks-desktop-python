@@ -93,6 +93,7 @@ function compare(st, exp, req, url, body) {
     const e = check(`${where} header ${name}`, Array.isArray(raw) ? raw.join(", ") : raw, v, st);
     if (e) errors.push(e);
   }
+  if (exp.rawBody !== undefined && body !== exp.rawBody) errors.push(`${where}: body ${JSON.stringify(body.slice(0, 200))}, expected ${JSON.stringify(exp.rawBody)}`);
   if (exp.body !== undefined) {
     let parsed;
     try {
