@@ -22,7 +22,7 @@ async def main(customer_id: str) -> None:
                     print(customer.full_name, customer.balance)
         except CursorExpiredError as error:
             print(
-                f"Cursor expired after {error.items_yielded} customers; resume with updated_after={error.last_updated_at}"
+                f"Cursor expired after {error.items_yielded} customers; restart the same query and skip IDs already processed"
             )
         print(f"{count} customers")
 

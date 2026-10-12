@@ -78,6 +78,9 @@ Operations and parameter shapes used by the fixtures:
 | `qbd.invoices.update` | `id` | `revisionNumber`, `memo` (`null` means "send null to clear") |
 | `qbd.invoices.void` | `id` | |
 | `qbd.customers.retrieve` | `id` | |
+| `qbd.items.list` | | `limit` |
+| `qbd.items.retrieve` | `id` | |
+| `qbd.entities.retrieve` | `id` | |
 | `qbd.healthCheck` | | |
 | `endUsers.list` | | `limit` |
 | `endUsers.passthrough` | `id` | free-form JSON body |
@@ -119,6 +122,7 @@ The runner compares only the keys that are present.
 - `result`: map of dotted wire paths to expected JSON values, for example `{ "id": "7-1700000000", "subtotal": "105.50" }`. Serialize the SDK's typed result back to wire JSON with the SDK's own serialization, then compare. Decimals must come out as the same decimal string.
 - `text`: the exact text returned by an `xml` call.
 - `items`: the `id`s of the items yielded by `iterate`, in order.
+- `variant`: the SDK class of the result of an operation that returns a discriminated union (`qbd.items.retrieve` returns `Item`): the model of its `objectType` (`ServiceItem`), or the union's fallback for a kind the SDK does not know (`UnknownItem`). `itemVariants` is the same for each item yielded by `iterate`. The Node.js SDK returns plain JSON typed as a TypeScript union, so it has no class to check.
 - `page`: `ids`, `nextCursor`, `hasMore`, `remainingCount` of the first page.
 - `handle`: `id` and `status` of the request handle returned by `enqueue`.
 - `response`: `status`, `requestId` (the SDK's reported request ID: `Daapi-Request-Id`, or after a long poll the timed-out request's `details.requestId`) and `headers` (lowercase name to value).

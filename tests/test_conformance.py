@@ -344,9 +344,14 @@ def check_outcome(scenario: Mapping[str, Any], seen: Observed) -> None:
             assert _dotted(wire, path) == value, f"result {path}: {_dotted(wire, path)!r} != {value!r}"
     if "text" in outcome:
         assert seen.text == outcome["text"]
+    if "variant" in outcome:
+        assert type(seen.result).__name__ == outcome["variant"]
     if "items" in outcome:
         assert seen.items is not None
         assert [item.id for item in seen.items] == outcome["items"]
+    if "itemVariants" in outcome:
+        assert seen.items is not None
+        assert [type(item).__name__ for item in seen.items] == outcome["itemVariants"]
     if "page" in outcome:
         page = seen.page
         assert page is not None

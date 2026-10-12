@@ -258,9 +258,11 @@ class InternalError(APIError):
 class CursorExpiredError(InvalidRequestError):
     """``410 CURSOR_EXPIRED``: the QuickBooks iterator behind a list cursor is gone.
 
-    The SDK never restarts the list silently, because data may have changed. To resume, start
-    a new list call with an ``updated_after`` watermark (for example ``last_updated_at``) and
-    skip IDs you already processed.
+    The SDK never restarts the list silently, because data may have changed. Restart the same
+    query and skip IDs you already processed. Do not resume from ``last_updated_at``: QuickBooks
+    returns records in its own order, not by ``updated_at``, so records not yet read can be older.
+    An incremental sync keeps the ``updated_after`` watermark of its previous completed sync until
+    the whole traversal finishes (pagination guide, "Recovering from CURSOR_EXPIRED").
     """
 
     items_yielded: int
