@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.6.0 (2026-10-12)
+
+- **Breaking:** the list parameters type of `qbd.classes.list` is renamed from `ClasseListParams` to `ClassListParams` (the generator dropped only the final "s" of "classes"). Rename the type in your code; nothing else changes. No other type name was affected.
+- `client.webhook_endpoints.rotate_secret()` works: the API now honors the Idempotency-Key the client always sends (a retry returns the same new secret without rotating twice) and answers an unknown endpoint ID with `404 RESOURCE_MISSING`. It answered `400 INVALID_PARAMETER`.
+- New error code `QBD_SALES_TAX_THROUGH_DATE_TOO_EARLY` (`ErrorCode.QBD_SALES_TAX_THROUGH_DATE_TOO_EARLY`): `422`, not retryable. QuickBooks refused a sales tax payment check and asked for a later sales tax 'through' date (status 3140); nothing changed. If the end user records the sales tax in QuickBooks instead, read and link that check rather than creating another. It answered `QBD_REFERENCE_NOT_FOUND` on `vendorId`.
+- A sales representative initial that is already in use answers `409 QBD_DUPLICATE_NAME` with `param` `initial` (QuickBooks status 3180). It answered `422 QBD_REQUEST_ERROR`.
+- `QBD_OBJECT_IN_USE` is `retryable` only when the record is open or locked in QuickBooks. A deletion or void refused because other records still use the object is `retryable: false`, so the client no longer treats it as worth repeating.
+- Status 3390 (too many open QuickBooks list iterators) is `QBD_TRANSIENT_ERROR` with `details.reason` `max_iterators`. The API now stops the QuickBooks iterator of a cursor you stop reading (after about 10 seconds idle, or when a fourth cursor list starts for the same end user), so breaking out of a list loop early no longer uses up QuickBooks' iterator limit.
+- Report validation: `missing_checks` requires `accountIds` or `accountFullNames`, the job detail reports require `entityIds` or `entityFullNames`, and `physical_inventory_worksheet` rejects `reportDateMacro`, each with `400 INVALID_PARAMETER` naming the parameter. Unit of measure set create rejects `isActive: false`, which QuickBooks ignores.
+- New error code `QBD_TRANSIENT_ERROR` (`ErrorCode.QBD_TRANSIENT_ERROR`): `503`, retryable, outcome `not_applied`. QuickBooks was briefly busy (status 3390, or 3180 when a list was modified by another user) and changed nothing. The client retries it automatically with the same idempotency key, which now runs the write again instead of replaying the error. These answered `QBD_REQUEST_ERROR` (`422`, not retryable).
+
 ## 0.5.4 (2026-10-09)
 
 - New error code `ROUTE_NOT_FOUND` (`ErrorCode.ROUTE_NOT_FOUND`): a `404` for a method and path the API has no endpoint for, such as the API root. These answered `RESOURCE_MISSING`, whose cause describes a missing ID.

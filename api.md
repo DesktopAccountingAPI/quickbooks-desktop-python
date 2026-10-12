@@ -2,7 +2,7 @@
 
 # API reference
 
-Every method of `DesktopAccountingApi`, generated from the API contract (275 operations, contract `sha256:d4adaec794b6`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
+Every method of `DesktopAccountingApi`, generated from the API contract (433 operations, contract `sha256:45acc3e65d06`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
 
 Every method also accepts the keyword arguments `timeout`, `total_timeout` and `max_retries`; QuickBooks Desktop operations accept `end_user_id` (or Conductor's `conductor_end_user_id`) and `server_timeout`, and writes accept `idempotency_key`. Non-paginated methods are available under `with_raw_response`, and async-capable ones under `enqueue` (returning a `RequestHandle`).
 
@@ -18,11 +18,14 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 
 - `client.end_users.create(company_name=..., source_id=..., email=...) -> EndUser`: `POST /v1/end-users`. Create an end user.
 - `client.end_users.delete(id) -> EndUserDeleted`: `DELETE /v1/end-users/{id}`. Delete an end user.
+- `client.end_users.disable_connection(id) -> EndUserConnection`: `POST /v1/end-users/{id}/connection/disable`. Disable the connection.
+- `client.end_users.enable_connection(id) -> EndUserConnection`: `POST /v1/end-users/{id}/connection/enable`. Enable the connection.
 - `client.end_users.list(**params) -> CursorPager[EndUser]`: `GET /v1/end-users`. List end users.
 - `client.end_users.passthrough(id, body) -> dict[str, Any]`: `POST /v1/end-users/{id}/passthrough/{integrationSlug}`. Send a raw qbXML request.
 - `client.end_users.passthrough_xml(id, xml) -> str`: `POST /v1/end-users/{id}/passthrough/{integrationSlug}` with `application/xml`. Raw qbXML variant.
 - `client.end_users.reset_company_file(id, mode=..., confirm=...) -> EndUser`: `POST /v1/end-users/{id}/reset-company-file`. Reset the company file.
 - `client.end_users.retrieve(id) -> EndUser`: `GET /v1/end-users/{id}`. Retrieve an end user.
+- `client.end_users.retrieve_connection(id) -> EndUserConnection`: `GET /v1/end-users/{id}/connection`. Retrieve the connection.
 - `client.end_users.update(id, **params) -> EndUser`: `POST /v1/end-users/{id}`. Update an end user.
 
 ## Health check operations
@@ -36,8 +39,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.accounts`
 
 - `client.qbd.accounts.create(name=..., account_type=..., **params) -> Account`: `POST /v1/quickbooks-desktop/accounts`. Create an account.
+- `client.qbd.accounts.delete(id, confirm=...) -> AccountDeleted`: `DELETE /v1/quickbooks-desktop/accounts/{id}`. Delete an account.
 - `client.qbd.accounts.list(**params) -> AccountList`: `GET /v1/quickbooks-desktop/accounts`. List accounts.
+- `client.qbd.accounts.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/accounts/{id}/merge`. Merge an account into another.
 - `client.qbd.accounts.retrieve(id) -> Account`: `GET /v1/quickbooks-desktop/accounts/{id}`. Retrieve an account.
+- `client.qbd.accounts.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/accounts/{id}/custom-fields`. Set a custom field on an account.
 - `client.qbd.accounts.update(id, revision_number=..., **params) -> Account`: `POST /v1/quickbooks-desktop/accounts/{id}`. Update an account.
 
 ## Account tax lines operations
@@ -54,6 +60,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.bill_check_payments.delete(id) -> BillCheckPaymentDeleted`: `DELETE /v1/quickbooks-desktop/bill-check-payments/{id}`. Delete a bill check payment.
 - `client.qbd.bill_check_payments.list(**params) -> CursorPager[BillCheckPayment]`: `GET /v1/quickbooks-desktop/bill-check-payments`. List bill check payments.
 - `client.qbd.bill_check_payments.retrieve(id) -> BillCheckPayment`: `GET /v1/quickbooks-desktop/bill-check-payments/{id}`. Retrieve a bill check payment.
+- `client.qbd.bill_check_payments.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/bill-check-payments/{id}/custom-fields`. Set a custom field on a bill check payment.
 - `client.qbd.bill_check_payments.update(id, revision_number=..., **params) -> BillCheckPayment`: `POST /v1/quickbooks-desktop/bill-check-payments/{id}`. Update a bill check payment.
 - `client.qbd.bill_check_payments.void(id) -> BillCheckPaymentVoided`: `POST /v1/quickbooks-desktop/bill-check-payments/{id}/void`. Void a bill check payment.
 
@@ -65,7 +72,17 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.bill_credit_card_payments.delete(id) -> BillCreditCardPaymentDeleted`: `DELETE /v1/quickbooks-desktop/bill-credit-card-payments/{id}`. Delete a bill credit card payment.
 - `client.qbd.bill_credit_card_payments.list(**params) -> CursorPager[BillCreditCardPayment]`: `GET /v1/quickbooks-desktop/bill-credit-card-payments`. List bill credit card payments.
 - `client.qbd.bill_credit_card_payments.retrieve(id) -> BillCreditCardPayment`: `GET /v1/quickbooks-desktop/bill-credit-card-payments/{id}`. Retrieve a bill credit card payment.
+- `client.qbd.bill_credit_card_payments.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/bill-credit-card-payments/{id}/custom-fields`. Set a custom field on a bill credit card payment.
 - `client.qbd.bill_credit_card_payments.void(id) -> BillCreditCardPaymentVoided`: `POST /v1/quickbooks-desktop/bill-credit-card-payments/{id}/void`. Void a bill credit card payment.
+
+## Billing rates operations
+
+`client.qbd.billing_rates`
+
+- `client.qbd.billing_rates.create(name=..., **params) -> BillingRate`: `POST /v1/quickbooks-desktop/billing-rates`. Create a billing rate.
+- `client.qbd.billing_rates.delete(id, confirm=...) -> BillingRateDeleted`: `DELETE /v1/quickbooks-desktop/billing-rates/{id}`. Delete a billing rate.
+- `client.qbd.billing_rates.list(**params) -> BillingRateList`: `GET /v1/quickbooks-desktop/billing-rates`. List billing rates.
+- `client.qbd.billing_rates.retrieve(id) -> BillingRate`: `GET /v1/quickbooks-desktop/billing-rates/{id}`. Retrieve a billing rate.
 
 ## Bills operations
 
@@ -75,6 +92,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.bills.delete(id) -> BillDeleted`: `DELETE /v1/quickbooks-desktop/bills/{id}`. Delete a bill.
 - `client.qbd.bills.list(**params) -> CursorPager[Bill]`: `GET /v1/quickbooks-desktop/bills`. List bills.
 - `client.qbd.bills.retrieve(id) -> Bill`: `GET /v1/quickbooks-desktop/bills/{id}`. Retrieve a bill.
+- `client.qbd.bills.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/bills/{id}/custom-fields`. Set a custom field on a bill.
 - `client.qbd.bills.update(id, revision_number=..., **params) -> Bill`: `POST /v1/quickbooks-desktop/bills/{id}`. Update a bill.
 - `client.qbd.bills.void(id) -> BillVoided`: `POST /v1/quickbooks-desktop/bills/{id}/void`. Void a bill.
 
@@ -92,6 +110,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.build_assemblies.delete(id) -> BuildAssemblyDeleted`: `DELETE /v1/quickbooks-desktop/build-assemblies/{id}`. Delete a build assembly.
 - `client.qbd.build_assemblies.list(**params) -> CursorPager[BuildAssembly]`: `GET /v1/quickbooks-desktop/build-assemblies`. List build assemblies.
 - `client.qbd.build_assemblies.retrieve(id) -> BuildAssembly`: `GET /v1/quickbooks-desktop/build-assemblies/{id}`. Retrieve a build assembly.
+- `client.qbd.build_assemblies.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/build-assemblies/{id}/custom-fields`. Set a custom field on a build assembly.
 - `client.qbd.build_assemblies.update(id, revision_number=..., **params) -> BuildAssembly`: `POST /v1/quickbooks-desktop/build-assemblies/{id}`. Update a build assembly.
 
 ## Checks operations
@@ -102,6 +121,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.checks.delete(id) -> CheckDeleted`: `DELETE /v1/quickbooks-desktop/checks/{id}`. Delete a check.
 - `client.qbd.checks.list(**params) -> CursorPager[Check]`: `GET /v1/quickbooks-desktop/checks`. List checks.
 - `client.qbd.checks.retrieve(id) -> Check`: `GET /v1/quickbooks-desktop/checks/{id}`. Retrieve a check.
+- `client.qbd.checks.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/checks/{id}/custom-fields`. Set a custom field on a check.
 - `client.qbd.checks.update(id, revision_number=..., **params) -> Check`: `POST /v1/quickbooks-desktop/checks/{id}`. Update a check.
 - `client.qbd.checks.void(id) -> CheckVoided`: `POST /v1/quickbooks-desktop/checks/{id}/void`. Void a check.
 
@@ -110,7 +130,9 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.classes`
 
 - `client.qbd.classes.create(name=..., **params) -> Class`: `POST /v1/quickbooks-desktop/classes`. Create a class.
+- `client.qbd.classes.delete(id, confirm=...) -> ClassDeleted`: `DELETE /v1/quickbooks-desktop/classes/{id}`. Delete a class.
 - `client.qbd.classes.list(**params) -> ClassList`: `GET /v1/quickbooks-desktop/classes`. List classes.
+- `client.qbd.classes.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/classes/{id}/merge`. Merge a class into another.
 - `client.qbd.classes.retrieve(id) -> Class`: `GET /v1/quickbooks-desktop/classes/{id}`. Retrieve a class.
 - `client.qbd.classes.update(id, revision_number=..., **params) -> Class`: `POST /v1/quickbooks-desktop/classes/{id}`. Update a class.
 
@@ -128,6 +150,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.credit_card_charges.delete(id) -> CreditCardChargeDeleted`: `DELETE /v1/quickbooks-desktop/credit-card-charges/{id}`. Delete a credit card charge.
 - `client.qbd.credit_card_charges.list(**params) -> CursorPager[CreditCardCharge]`: `GET /v1/quickbooks-desktop/credit-card-charges`. List credit card charges.
 - `client.qbd.credit_card_charges.retrieve(id) -> CreditCardCharge`: `GET /v1/quickbooks-desktop/credit-card-charges/{id}`. Retrieve a credit card charge.
+- `client.qbd.credit_card_charges.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/credit-card-charges/{id}/custom-fields`. Set a custom field on a credit card charge.
 - `client.qbd.credit_card_charges.update(id, revision_number=..., **params) -> CreditCardCharge`: `POST /v1/quickbooks-desktop/credit-card-charges/{id}`. Update a credit card charge.
 - `client.qbd.credit_card_charges.void(id) -> CreditCardChargeVoided`: `POST /v1/quickbooks-desktop/credit-card-charges/{id}/void`. Void a credit card charge.
 
@@ -139,6 +162,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.credit_card_credits.delete(id) -> CreditCardCreditDeleted`: `DELETE /v1/quickbooks-desktop/credit-card-credits/{id}`. Delete a credit card credit.
 - `client.qbd.credit_card_credits.list(**params) -> CursorPager[CreditCardCredit]`: `GET /v1/quickbooks-desktop/credit-card-credits`. List credit card credits.
 - `client.qbd.credit_card_credits.retrieve(id) -> CreditCardCredit`: `GET /v1/quickbooks-desktop/credit-card-credits/{id}`. Retrieve a credit card credit.
+- `client.qbd.credit_card_credits.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/credit-card-credits/{id}/custom-fields`. Set a custom field on a credit card credit.
 - `client.qbd.credit_card_credits.update(id, revision_number=..., **params) -> CreditCardCredit`: `POST /v1/quickbooks-desktop/credit-card-credits/{id}`. Update a credit card credit.
 - `client.qbd.credit_card_credits.void(id) -> CreditCardCreditVoided`: `POST /v1/quickbooks-desktop/credit-card-credits/{id}/void`. Void a credit card credit.
 
@@ -150,6 +174,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.credit_card_refunds.delete(id) -> CreditCardRefundDeleted`: `DELETE /v1/quickbooks-desktop/credit-card-refunds/{id}`. Delete a credit card refund.
 - `client.qbd.credit_card_refunds.list(**params) -> CursorPager[CreditCardRefund]`: `GET /v1/quickbooks-desktop/credit-card-refunds`. List credit card refunds.
 - `client.qbd.credit_card_refunds.retrieve(id) -> CreditCardRefund`: `GET /v1/quickbooks-desktop/credit-card-refunds/{id}`. Retrieve a credit card refund.
+- `client.qbd.credit_card_refunds.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/credit-card-refunds/{id}/custom-fields`. Set a custom field on a credit card refund.
 - `client.qbd.credit_card_refunds.void(id) -> CreditCardRefundVoided`: `POST /v1/quickbooks-desktop/credit-card-refunds/{id}/void`. Void a credit card refund.
 
 ## Credit memos operations
@@ -160,6 +185,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.credit_memos.delete(id) -> CreditMemoDeleted`: `DELETE /v1/quickbooks-desktop/credit-memos/{id}`. Delete a credit memo.
 - `client.qbd.credit_memos.list(**params) -> CursorPager[CreditMemo]`: `GET /v1/quickbooks-desktop/credit-memos`. List credit memos.
 - `client.qbd.credit_memos.retrieve(id) -> CreditMemo`: `GET /v1/quickbooks-desktop/credit-memos/{id}`. Retrieve a credit memo.
+- `client.qbd.credit_memos.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/credit-memos/{id}/custom-fields`. Set a custom field on a credit memo.
 - `client.qbd.credit_memos.update(id, revision_number=..., **params) -> CreditMemo`: `POST /v1/quickbooks-desktop/credit-memos/{id}`. Update a credit memo.
 - `client.qbd.credit_memos.void(id) -> CreditMemoVoided`: `POST /v1/quickbooks-desktop/credit-memos/{id}/void`. Void a credit memo.
 
@@ -168,17 +194,30 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.currencies`
 
 - `client.qbd.currencies.create(name=..., currency_code=..., **params) -> Currency`: `POST /v1/quickbooks-desktop/currencies`. Create a currency.
+- `client.qbd.currencies.delete(id, confirm=...) -> CurrencyDeleted`: `DELETE /v1/quickbooks-desktop/currencies/{id}`. Delete a currency.
 - `client.qbd.currencies.list(**params) -> CurrencyList`: `GET /v1/quickbooks-desktop/currencies`. List currencies.
 - `client.qbd.currencies.retrieve(id) -> Currency`: `GET /v1/quickbooks-desktop/currencies/{id}`. Retrieve a currency.
 - `client.qbd.currencies.update(id, revision_number=..., **params) -> Currency`: `POST /v1/quickbooks-desktop/currencies/{id}`. Update a currency.
+
+## Customer messages operations
+
+`client.qbd.customer_messages`
+
+- `client.qbd.customer_messages.create(name=..., **params) -> CustomerMessage`: `POST /v1/quickbooks-desktop/customer-messages`. Create a customer message.
+- `client.qbd.customer_messages.delete(id, confirm=...) -> CustomerMessageDeleted`: `DELETE /v1/quickbooks-desktop/customer-messages/{id}`. Delete a customer message.
+- `client.qbd.customer_messages.list(**params) -> CustomerMessageList`: `GET /v1/quickbooks-desktop/customer-messages`. List customer messages.
+- `client.qbd.customer_messages.retrieve(id) -> CustomerMessage`: `GET /v1/quickbooks-desktop/customer-messages/{id}`. Retrieve a customer message.
 
 ## Customers operations
 
 `client.qbd.customers`
 
 - `client.qbd.customers.create(name=..., **params) -> Customer`: `POST /v1/quickbooks-desktop/customers`. Create a customer.
+- `client.qbd.customers.delete(id, confirm=...) -> CustomerDeleted`: `DELETE /v1/quickbooks-desktop/customers/{id}`. Delete a customer.
 - `client.qbd.customers.list(**params) -> CursorPager[Customer]`: `GET /v1/quickbooks-desktop/customers`. List customers.
+- `client.qbd.customers.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=..., **params) -> ListMerge`: `POST /v1/quickbooks-desktop/customers/{id}/merge`. Merge a customer into another.
 - `client.qbd.customers.retrieve(id) -> Customer`: `GET /v1/quickbooks-desktop/customers/{id}`. Retrieve a customer.
+- `client.qbd.customers.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/customers/{id}/custom-fields`. Set a custom field on a customer.
 - `client.qbd.customers.update(id, revision_number=..., **params) -> Customer`: `POST /v1/quickbooks-desktop/customers/{id}`. Update a customer.
 
 ## Customer types operations
@@ -186,14 +225,25 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.customer_types`
 
 - `client.qbd.customer_types.create(name=..., **params) -> CustomerType`: `POST /v1/quickbooks-desktop/customer-types`. Create a customer type.
+- `client.qbd.customer_types.delete(id, confirm=...) -> CustomerTypeDeleted`: `DELETE /v1/quickbooks-desktop/customer-types/{id}`. Delete a customer type.
 - `client.qbd.customer_types.list(**params) -> CustomerTypeList`: `GET /v1/quickbooks-desktop/customer-types`. List customer types.
 - `client.qbd.customer_types.retrieve(id) -> CustomerType`: `GET /v1/quickbooks-desktop/customer-types/{id}`. Retrieve a customer type.
+
+## Custom field definitions operations
+
+`client.qbd.custom_field_definitions`
+
+- `client.qbd.custom_field_definitions.create(owner_id=..., name=..., type=..., **params) -> CustomFieldDefinition`: `POST /v1/quickbooks-desktop/custom-field-definitions`. Create a custom field definition.
+- `client.qbd.custom_field_definitions.delete(name, owner_id=..., confirm=...) -> DeletedCustomFieldDefinition`: `DELETE /v1/quickbooks-desktop/custom-field-definitions/{name}`. Request deletion of a private custom field definition.
+- `client.qbd.custom_field_definitions.list(**params) -> CustomFieldDefinitionList`: `GET /v1/quickbooks-desktop/custom-field-definitions`. List custom field definitions.
+- `client.qbd.custom_field_definitions.update(name, owner_id=..., **params) -> CustomFieldDefinition`: `POST /v1/quickbooks-desktop/custom-field-definitions/{name}`. Update a custom field definition.
 
 ## Date driven terms operations
 
 `client.qbd.date_driven_terms`
 
 - `client.qbd.date_driven_terms.create(name=..., due_day_of_month=..., **params) -> DateDrivenTerm`: `POST /v1/quickbooks-desktop/date-driven-terms`. Create a date-driven term.
+- `client.qbd.date_driven_terms.delete(id, confirm=...) -> DateDrivenTermDeleted`: `DELETE /v1/quickbooks-desktop/date-driven-terms/{id}`. Delete a date-driven term.
 - `client.qbd.date_driven_terms.list(**params) -> DateDrivenTermList`: `GET /v1/quickbooks-desktop/date-driven-terms`. List date-driven terms.
 - `client.qbd.date_driven_terms.retrieve(id) -> DateDrivenTerm`: `GET /v1/quickbooks-desktop/date-driven-terms/{id}`. Retrieve a date-driven term.
 
@@ -217,6 +267,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.deposits.delete(id) -> DepositDeleted`: `DELETE /v1/quickbooks-desktop/deposits/{id}`. Delete a deposit.
 - `client.qbd.deposits.list(**params) -> CursorPager[Deposit]`: `GET /v1/quickbooks-desktop/deposits`. List deposits.
 - `client.qbd.deposits.retrieve(id) -> Deposit`: `GET /v1/quickbooks-desktop/deposits/{id}`. Retrieve a deposit.
+- `client.qbd.deposits.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/deposits/{id}/custom-fields`. Set a custom field on a deposit.
 - `client.qbd.deposits.update(id, revision_number=..., **params) -> Deposit`: `POST /v1/quickbooks-desktop/deposits/{id}`. Update a deposit.
 - `client.qbd.deposits.void(id) -> DepositVoided`: `POST /v1/quickbooks-desktop/deposits/{id}/void`. Void a deposit.
 
@@ -225,8 +276,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.discount_items`
 
 - `client.qbd.discount_items.create(name=..., **params) -> DiscountItem`: `POST /v1/quickbooks-desktop/discount-items`. Create a discount item.
+- `client.qbd.discount_items.delete(id, confirm=...) -> DiscountItemDeleted`: `DELETE /v1/quickbooks-desktop/discount-items/{id}`. Delete a discount item.
 - `client.qbd.discount_items.list(**params) -> CursorPager[DiscountItem]`: `GET /v1/quickbooks-desktop/discount-items`. List discount items.
+- `client.qbd.discount_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/discount-items/{id}/merge`. Merge a discount item into another.
 - `client.qbd.discount_items.retrieve(id) -> DiscountItem`: `GET /v1/quickbooks-desktop/discount-items/{id}`. Retrieve a discount item.
+- `client.qbd.discount_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/discount-items/{id}/custom-fields`. Set a custom field on a discount item.
 - `client.qbd.discount_items.update(id, revision_number=..., **params) -> DiscountItem`: `POST /v1/quickbooks-desktop/discount-items/{id}`. Update a discount item.
 
 ## Employees operations
@@ -234,9 +288,18 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.employees`
 
 - `client.qbd.employees.create(**params) -> Employee`: `POST /v1/quickbooks-desktop/employees`. Create an employee.
+- `client.qbd.employees.delete(id, confirm=...) -> EmployeeDeleted`: `DELETE /v1/quickbooks-desktop/employees/{id}`. Delete an employee.
 - `client.qbd.employees.list(**params) -> EmployeeList`: `GET /v1/quickbooks-desktop/employees`. List employees.
 - `client.qbd.employees.retrieve(id) -> Employee`: `GET /v1/quickbooks-desktop/employees/{id}`. Retrieve an employee.
+- `client.qbd.employees.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/employees/{id}/custom-fields`. Set a custom field on an employee.
 - `client.qbd.employees.update(id, revision_number=..., **params) -> Employee`: `POST /v1/quickbooks-desktop/employees/{id}`. Update an employee.
+
+## Entities operations
+
+`client.qbd.entities`
+
+- `client.qbd.entities.list(**params) -> CursorPager[Entity]`: `GET /v1/quickbooks-desktop/entities`. List entities.
+- `client.qbd.entities.retrieve(id) -> Entity`: `GET /v1/quickbooks-desktop/entities/{id}`. Retrieve an entity.
 
 ## Estimates operations
 
@@ -246,7 +309,19 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.estimates.delete(id) -> EstimateDeleted`: `DELETE /v1/quickbooks-desktop/estimates/{id}`. Delete an estimate.
 - `client.qbd.estimates.list(**params) -> CursorPager[Estimate]`: `GET /v1/quickbooks-desktop/estimates`. List estimates.
 - `client.qbd.estimates.retrieve(id) -> Estimate`: `GET /v1/quickbooks-desktop/estimates/{id}`. Retrieve an estimate.
+- `client.qbd.estimates.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/estimates/{id}/custom-fields`. Set a custom field on an estimate.
 - `client.qbd.estimates.update(id, revision_number=..., **params) -> Estimate`: `POST /v1/quickbooks-desktop/estimates/{id}`. Update an estimate.
+
+## Fixed asset items operations
+
+`client.qbd.fixed_asset_items`
+
+- `client.qbd.fixed_asset_items.create(name=..., acquired_as=..., purchase_description=..., purchase_date=..., **params) -> FixedAssetItem`: `POST /v1/quickbooks-desktop/fixed-asset-items`. Create a fixed asset item.
+- `client.qbd.fixed_asset_items.delete(id, confirm=...) -> FixedAssetItemDeleted`: `DELETE /v1/quickbooks-desktop/fixed-asset-items/{id}`. Delete a fixed asset item.
+- `client.qbd.fixed_asset_items.list(**params) -> CursorPager[FixedAssetItem]`: `GET /v1/quickbooks-desktop/fixed-asset-items`. List fixed asset items.
+- `client.qbd.fixed_asset_items.retrieve(id) -> FixedAssetItem`: `GET /v1/quickbooks-desktop/fixed-asset-items/{id}`. Retrieve a fixed asset item.
+- `client.qbd.fixed_asset_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/fixed-asset-items/{id}/custom-fields`. Set a custom field on a fixed asset item.
+- `client.qbd.fixed_asset_items.update(id, revision_number=..., **params) -> FixedAssetItem`: `POST /v1/quickbooks-desktop/fixed-asset-items/{id}`. Update a fixed asset item.
 
 ## Inventory adjustments operations
 
@@ -256,6 +331,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.inventory_adjustments.delete(id) -> InventoryAdjustmentDeleted`: `DELETE /v1/quickbooks-desktop/inventory-adjustments/{id}`. Delete an inventory adjustment.
 - `client.qbd.inventory_adjustments.list(**params) -> InventoryAdjustmentList`: `GET /v1/quickbooks-desktop/inventory-adjustments`. List inventory adjustments.
 - `client.qbd.inventory_adjustments.retrieve(id) -> InventoryAdjustment`: `GET /v1/quickbooks-desktop/inventory-adjustments/{id}`. Retrieve an inventory adjustment.
+- `client.qbd.inventory_adjustments.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/inventory-adjustments/{id}/custom-fields`. Set a custom field on an inventory adjustment.
 - `client.qbd.inventory_adjustments.update(id, revision_number=..., **params) -> InventoryAdjustment`: `POST /v1/quickbooks-desktop/inventory-adjustments/{id}`. Update an inventory adjustment.
 - `client.qbd.inventory_adjustments.void(id) -> InventoryAdjustmentVoided`: `POST /v1/quickbooks-desktop/inventory-adjustments/{id}/void`. Void an inventory adjustment.
 
@@ -263,9 +339,12 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 
 `client.qbd.inventory_assembly_items`
 
+- `client.qbd.inventory_assembly_items.can_build(id, transaction_date=...) -> AssemblyBuildCapacity`: `GET /v1/quickbooks-desktop/inventory-assembly-items/{id}/can-build`. Check how many assemblies can be built.
 - `client.qbd.inventory_assembly_items.create(name=..., **params) -> InventoryAssemblyItem`: `POST /v1/quickbooks-desktop/inventory-assembly-items`. Create an inventory assembly item.
+- `client.qbd.inventory_assembly_items.delete(id, confirm=...) -> InventoryAssemblyItemDeleted`: `DELETE /v1/quickbooks-desktop/inventory-assembly-items/{id}`. Delete an inventory assembly item.
 - `client.qbd.inventory_assembly_items.list(**params) -> CursorPager[InventoryAssemblyItem]`: `GET /v1/quickbooks-desktop/inventory-assembly-items`. List inventory assembly items.
 - `client.qbd.inventory_assembly_items.retrieve(id) -> InventoryAssemblyItem`: `GET /v1/quickbooks-desktop/inventory-assembly-items/{id}`. Retrieve an inventory assembly item.
+- `client.qbd.inventory_assembly_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/inventory-assembly-items/{id}/custom-fields`. Set a custom field on an inventory assembly item.
 - `client.qbd.inventory_assembly_items.update(id, revision_number=..., **params) -> InventoryAssemblyItem`: `POST /v1/quickbooks-desktop/inventory-assembly-items/{id}`. Update an inventory assembly item.
 
 ## Inventory items operations
@@ -273,8 +352,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.inventory_items`
 
 - `client.qbd.inventory_items.create(name=..., **params) -> InventoryItem`: `POST /v1/quickbooks-desktop/inventory-items`. Create an inventory item.
+- `client.qbd.inventory_items.delete(id, confirm=...) -> InventoryItemDeleted`: `DELETE /v1/quickbooks-desktop/inventory-items/{id}`. Delete an inventory item.
 - `client.qbd.inventory_items.list(**params) -> CursorPager[InventoryItem]`: `GET /v1/quickbooks-desktop/inventory-items`. List inventory items.
+- `client.qbd.inventory_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/inventory-items/{id}/merge`. Merge an inventory item into another.
 - `client.qbd.inventory_items.retrieve(id) -> InventoryItem`: `GET /v1/quickbooks-desktop/inventory-items/{id}`. Retrieve an inventory item.
+- `client.qbd.inventory_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/inventory-items/{id}/custom-fields`. Set a custom field on an inventory item.
 - `client.qbd.inventory_items.update(id, revision_number=..., **params) -> InventoryItem`: `POST /v1/quickbooks-desktop/inventory-items/{id}`. Update an inventory item.
 
 ## Inventory sites operations
@@ -282,9 +364,20 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.inventory_sites`
 
 - `client.qbd.inventory_sites.create(name=..., **params) -> InventorySite`: `POST /v1/quickbooks-desktop/inventory-sites`. Create an inventory site.
+- `client.qbd.inventory_sites.delete(id, confirm=...) -> InventorySiteDeleted`: `DELETE /v1/quickbooks-desktop/inventory-sites/{id}`. Delete an inventory site.
 - `client.qbd.inventory_sites.list(**params) -> InventorySiteList`: `GET /v1/quickbooks-desktop/inventory-sites`. List inventory sites.
 - `client.qbd.inventory_sites.retrieve(id) -> InventorySite`: `GET /v1/quickbooks-desktop/inventory-sites/{id}`. Retrieve an inventory site.
 - `client.qbd.inventory_sites.update(id, revision_number=..., **params) -> InventorySite`: `POST /v1/quickbooks-desktop/inventory-sites/{id}`. Update an inventory site.
+
+## Inventory transfers operations
+
+`client.qbd.inventory_transfers`
+
+- `client.qbd.inventory_transfers.create(from_inventory_site_id=..., to_inventory_site_id=..., **params) -> InventoryTransfer`: `POST /v1/quickbooks-desktop/inventory-transfers`. Create an inventory transfer.
+- `client.qbd.inventory_transfers.delete(id) -> InventoryTransferDeleted`: `DELETE /v1/quickbooks-desktop/inventory-transfers/{id}`. Delete an inventory transfer.
+- `client.qbd.inventory_transfers.list(**params) -> CursorPager[InventoryTransfer]`: `GET /v1/quickbooks-desktop/inventory-transfers`. List inventory transfers.
+- `client.qbd.inventory_transfers.retrieve(id) -> InventoryTransfer`: `GET /v1/quickbooks-desktop/inventory-transfers/{id}`. Retrieve an inventory transfer.
+- `client.qbd.inventory_transfers.update(id, revision_number=..., **params) -> InventoryTransfer`: `POST /v1/quickbooks-desktop/inventory-transfers/{id}`. Update an inventory transfer.
 
 ## Invoices operations
 
@@ -294,6 +387,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.invoices.delete(id) -> InvoiceDeleted`: `DELETE /v1/quickbooks-desktop/invoices/{id}`. Delete an invoice.
 - `client.qbd.invoices.list(**params) -> CursorPager[Invoice]`: `GET /v1/quickbooks-desktop/invoices`. List invoices.
 - `client.qbd.invoices.retrieve(id) -> Invoice`: `GET /v1/quickbooks-desktop/invoices/{id}`. Retrieve an invoice.
+- `client.qbd.invoices.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/invoices/{id}/custom-fields`. Set a custom field on an invoice.
 - `client.qbd.invoices.update(id, revision_number=..., **params) -> Invoice`: `POST /v1/quickbooks-desktop/invoices/{id}`. Update an invoice.
 - `client.qbd.invoices.void(id) -> InvoiceVoided`: `POST /v1/quickbooks-desktop/invoices/{id}/void`. Void an invoice.
 
@@ -302,8 +396,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.item_groups`
 
 - `client.qbd.item_groups.create(name=..., **params) -> ItemGroup`: `POST /v1/quickbooks-desktop/item-groups`. Create an item group.
+- `client.qbd.item_groups.delete(id, confirm=...) -> ItemGroupDeleted`: `DELETE /v1/quickbooks-desktop/item-groups/{id}`. Delete an item group.
 - `client.qbd.item_groups.list(**params) -> CursorPager[ItemGroup]`: `GET /v1/quickbooks-desktop/item-groups`. List item groups.
+- `client.qbd.item_groups.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/item-groups/{id}/merge`. Merge an item group into another.
 - `client.qbd.item_groups.retrieve(id) -> ItemGroup`: `GET /v1/quickbooks-desktop/item-groups/{id}`. Retrieve an item group.
+- `client.qbd.item_groups.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/item-groups/{id}/custom-fields`. Set a custom field on an item group.
 - `client.qbd.item_groups.update(id, revision_number=..., **params) -> ItemGroup`: `POST /v1/quickbooks-desktop/item-groups/{id}`. Update an item group.
 
 ## Item receipts operations
@@ -314,8 +411,16 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.item_receipts.delete(id) -> ItemReceiptDeleted`: `DELETE /v1/quickbooks-desktop/item-receipts/{id}`. Delete an item receipt.
 - `client.qbd.item_receipts.list(**params) -> CursorPager[ItemReceipt]`: `GET /v1/quickbooks-desktop/item-receipts`. List item receipts.
 - `client.qbd.item_receipts.retrieve(id) -> ItemReceipt`: `GET /v1/quickbooks-desktop/item-receipts/{id}`. Retrieve an item receipt.
+- `client.qbd.item_receipts.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/item-receipts/{id}/custom-fields`. Set a custom field on an item receipt.
 - `client.qbd.item_receipts.update(id, revision_number=..., **params) -> ItemReceipt`: `POST /v1/quickbooks-desktop/item-receipts/{id}`. Update an item receipt.
 - `client.qbd.item_receipts.void(id) -> ItemReceiptVoided`: `POST /v1/quickbooks-desktop/item-receipts/{id}/void`. Void an item receipt.
+
+## Items operations
+
+`client.qbd.items`
+
+- `client.qbd.items.list(**params) -> CursorPager[Item]`: `GET /v1/quickbooks-desktop/items`. List items.
+- `client.qbd.items.retrieve(id) -> Item`: `GET /v1/quickbooks-desktop/items/{id}`. Retrieve an item.
 
 ## Item sites operations
 
@@ -323,6 +428,15 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 
 - `client.qbd.item_sites.list(**params) -> CursorPager[ItemSite]`: `GET /v1/quickbooks-desktop/item-sites`. List item sites.
 - `client.qbd.item_sites.retrieve(id) -> ItemSite`: `GET /v1/quickbooks-desktop/item-sites/{id}`. Retrieve an item site.
+
+## Job types operations
+
+`client.qbd.job_types`
+
+- `client.qbd.job_types.create(name=..., **params) -> JobType`: `POST /v1/quickbooks-desktop/job-types`. Create a job type.
+- `client.qbd.job_types.delete(id, confirm=...) -> JobTypeDeleted`: `DELETE /v1/quickbooks-desktop/job-types/{id}`. Delete a job type.
+- `client.qbd.job_types.list(**params) -> JobTypeList`: `GET /v1/quickbooks-desktop/job-types`. List job types.
+- `client.qbd.job_types.retrieve(id) -> JobType`: `GET /v1/quickbooks-desktop/job-types/{id}`. Retrieve a job type.
 
 ## Journal entries operations
 
@@ -332,16 +446,29 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.journal_entries.delete(id) -> JournalEntryDeleted`: `DELETE /v1/quickbooks-desktop/journal-entries/{id}`. Delete a journal entry.
 - `client.qbd.journal_entries.list(**params) -> CursorPager[JournalEntry]`: `GET /v1/quickbooks-desktop/journal-entries`. List journal entries.
 - `client.qbd.journal_entries.retrieve(id) -> JournalEntry`: `GET /v1/quickbooks-desktop/journal-entries/{id}`. Retrieve a journal entry.
+- `client.qbd.journal_entries.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/journal-entries/{id}/custom-fields`. Set a custom field on a journal entry.
 - `client.qbd.journal_entries.update(id, revision_number=..., **params) -> JournalEntry`: `POST /v1/quickbooks-desktop/journal-entries/{id}`. Update a journal entry.
 - `client.qbd.journal_entries.void(id) -> JournalEntryVoided`: `POST /v1/quickbooks-desktop/journal-entries/{id}/void`. Void a journal entry.
+
+## Leads operations
+
+`client.qbd.leads`
+
+- `client.qbd.leads.create(full_name=..., **params) -> Lead`: `POST /v1/quickbooks-desktop/leads`. Create a lead.
+- `client.qbd.leads.list(**params) -> CursorPager[Lead]`: `GET /v1/quickbooks-desktop/leads`. List leads.
+- `client.qbd.leads.retrieve(id) -> Lead`: `GET /v1/quickbooks-desktop/leads/{id}`. Retrieve a lead.
+- `client.qbd.leads.update(id, revision_number=..., full_name=..., **params) -> Lead`: `POST /v1/quickbooks-desktop/leads/{id}`. Update a lead.
 
 ## Non inventory items operations
 
 `client.qbd.non_inventory_items`
 
 - `client.qbd.non_inventory_items.create(name=..., **params) -> NonInventoryItem`: `POST /v1/quickbooks-desktop/non-inventory-items`. Create a non-inventory item.
+- `client.qbd.non_inventory_items.delete(id, confirm=...) -> NonInventoryItemDeleted`: `DELETE /v1/quickbooks-desktop/non-inventory-items/{id}`. Delete a non-inventory item.
 - `client.qbd.non_inventory_items.list(**params) -> CursorPager[NonInventoryItem]`: `GET /v1/quickbooks-desktop/non-inventory-items`. List non-inventory items.
+- `client.qbd.non_inventory_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/non-inventory-items/{id}/merge`. Merge a non-inventory item into another.
 - `client.qbd.non_inventory_items.retrieve(id) -> NonInventoryItem`: `GET /v1/quickbooks-desktop/non-inventory-items/{id}`. Retrieve a non-inventory item.
+- `client.qbd.non_inventory_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/non-inventory-items/{id}/custom-fields`. Set a custom field on a non-inventory item.
 - `client.qbd.non_inventory_items.update(id, revision_number=..., **params) -> NonInventoryItem`: `POST /v1/quickbooks-desktop/non-inventory-items/{id}`. Update a non-inventory item.
 
 ## Other charge items operations
@@ -349,8 +476,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.other_charge_items`
 
 - `client.qbd.other_charge_items.create(name=..., **params) -> OtherChargeItem`: `POST /v1/quickbooks-desktop/other-charge-items`. Create an other charge item.
+- `client.qbd.other_charge_items.delete(id, confirm=...) -> OtherChargeItemDeleted`: `DELETE /v1/quickbooks-desktop/other-charge-items/{id}`. Delete an other charge item.
 - `client.qbd.other_charge_items.list(**params) -> CursorPager[OtherChargeItem]`: `GET /v1/quickbooks-desktop/other-charge-items`. List other charge items.
+- `client.qbd.other_charge_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/other-charge-items/{id}/merge`. Merge an other charge item into another.
 - `client.qbd.other_charge_items.retrieve(id) -> OtherChargeItem`: `GET /v1/quickbooks-desktop/other-charge-items/{id}`. Retrieve an other charge item.
+- `client.qbd.other_charge_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/other-charge-items/{id}/custom-fields`. Set a custom field on an other charge item.
 - `client.qbd.other_charge_items.update(id, revision_number=..., **params) -> OtherChargeItem`: `POST /v1/quickbooks-desktop/other-charge-items/{id}`. Update an other charge item.
 
 ## Other names operations
@@ -358,15 +488,30 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.other_names`
 
 - `client.qbd.other_names.create(name=..., **params) -> OtherName`: `POST /v1/quickbooks-desktop/other-names`. Create an other name.
+- `client.qbd.other_names.delete(id, confirm=...) -> OtherNameDeleted`: `DELETE /v1/quickbooks-desktop/other-names/{id}`. Delete an other name.
 - `client.qbd.other_names.list(**params) -> OtherNameList`: `GET /v1/quickbooks-desktop/other-names`. List other names.
 - `client.qbd.other_names.retrieve(id) -> OtherName`: `GET /v1/quickbooks-desktop/other-names/{id}`. Retrieve an other name.
+- `client.qbd.other_names.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/other-names/{id}/custom-fields`. Set a custom field on an other name.
 - `client.qbd.other_names.update(id, revision_number=..., **params) -> OtherName`: `POST /v1/quickbooks-desktop/other-names/{id}`. Update an other name.
+
+## Payment items operations
+
+`client.qbd.payment_items`
+
+- `client.qbd.payment_items.create(name=..., **params) -> PaymentItem`: `POST /v1/quickbooks-desktop/payment-items`. Create a payment item.
+- `client.qbd.payment_items.delete(id, confirm=...) -> PaymentItemDeleted`: `DELETE /v1/quickbooks-desktop/payment-items/{id}`. Delete a payment item.
+- `client.qbd.payment_items.list(**params) -> CursorPager[PaymentItem]`: `GET /v1/quickbooks-desktop/payment-items`. List payment items.
+- `client.qbd.payment_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/payment-items/{id}/merge`. Merge a payment item into another.
+- `client.qbd.payment_items.retrieve(id) -> PaymentItem`: `GET /v1/quickbooks-desktop/payment-items/{id}`. Retrieve a payment item.
+- `client.qbd.payment_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/payment-items/{id}/custom-fields`. Set a custom field on a payment item.
+- `client.qbd.payment_items.update(id, revision_number=..., **params) -> PaymentItem`: `POST /v1/quickbooks-desktop/payment-items/{id}`. Update a payment item.
 
 ## Payment methods operations
 
 `client.qbd.payment_methods`
 
 - `client.qbd.payment_methods.create(name=..., **params) -> PaymentMethod`: `POST /v1/quickbooks-desktop/payment-methods`. Create a payment method.
+- `client.qbd.payment_methods.delete(id, confirm=...) -> PaymentMethodDeleted`: `DELETE /v1/quickbooks-desktop/payment-methods/{id}`. Delete a payment method.
 - `client.qbd.payment_methods.list(**params) -> PaymentMethodList`: `GET /v1/quickbooks-desktop/payment-methods`. List payment methods.
 - `client.qbd.payment_methods.retrieve(id) -> PaymentMethod`: `GET /v1/quickbooks-desktop/payment-methods/{id}`. Retrieve a payment method.
 
@@ -376,13 +521,23 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 
 - `client.qbd.payments_to_deposit.list() -> PaymentsToDepositList`: `GET /v1/quickbooks-desktop/payments-to-deposit`. List payment to deposits.
 
+## Payroll non-wage items operations
+
+`client.qbd.payroll_non_wage_items`
+
+- `client.qbd.payroll_non_wage_items.delete(id, confirm=...) -> PayrollNonWageItemDeleted`: `DELETE /v1/quickbooks-desktop/payroll-non-wage-items/{id}`. Delete a payroll non-wage item.
+- `client.qbd.payroll_non_wage_items.list(**params) -> PayrollNonWageItemList`: `GET /v1/quickbooks-desktop/payroll-non-wage-items`. List payroll non-wage items.
+- `client.qbd.payroll_non_wage_items.retrieve(id) -> PayrollNonWageItem`: `GET /v1/quickbooks-desktop/payroll-non-wage-items/{id}`. Retrieve a payroll non-wage item.
+
 ## Payroll wage items operations
 
 `client.qbd.payroll_wage_items`
 
 - `client.qbd.payroll_wage_items.create(name=..., wage_type=..., expense_account_id=..., **params) -> PayrollWageItem`: `POST /v1/quickbooks-desktop/payroll-wage-items`. Create a payroll wage item.
+- `client.qbd.payroll_wage_items.delete(id, confirm=...) -> PayrollWageItemDeleted`: `DELETE /v1/quickbooks-desktop/payroll-wage-items/{id}`. Delete a payroll wage item.
 - `client.qbd.payroll_wage_items.list(**params) -> PayrollWageItemList`: `GET /v1/quickbooks-desktop/payroll-wage-items`. List payroll wage items.
 - `client.qbd.payroll_wage_items.retrieve(id) -> PayrollWageItem`: `GET /v1/quickbooks-desktop/payroll-wage-items/{id}`. Retrieve a payroll wage item.
+- `client.qbd.payroll_wage_items.update(id, revision_number=..., **params) -> PayrollWageItem`: `POST /v1/quickbooks-desktop/payroll-wage-items/{id}`. Update a payroll wage item.
 
 ## Preferences operations
 
@@ -395,6 +550,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.price_levels`
 
 - `client.qbd.price_levels.create(name=..., **params) -> PriceLevel`: `POST /v1/quickbooks-desktop/price-levels`. Create a price level.
+- `client.qbd.price_levels.delete(id, confirm=...) -> PriceLevelDeleted`: `DELETE /v1/quickbooks-desktop/price-levels/{id}`. Delete a price level.
 - `client.qbd.price_levels.list(**params) -> PriceLevelList`: `GET /v1/quickbooks-desktop/price-levels`. List price levels.
 - `client.qbd.price_levels.retrieve(id) -> PriceLevel`: `GET /v1/quickbooks-desktop/price-levels/{id}`. Retrieve a price level.
 - `client.qbd.price_levels.update(id, revision_number=..., **params) -> PriceLevel`: `POST /v1/quickbooks-desktop/price-levels/{id}`. Update a price level.
@@ -407,6 +563,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.purchase_orders.delete(id) -> PurchaseOrderDeleted`: `DELETE /v1/quickbooks-desktop/purchase-orders/{id}`. Delete a purchase order.
 - `client.qbd.purchase_orders.list(**params) -> CursorPager[PurchaseOrder]`: `GET /v1/quickbooks-desktop/purchase-orders`. List purchase orders.
 - `client.qbd.purchase_orders.retrieve(id) -> PurchaseOrder`: `GET /v1/quickbooks-desktop/purchase-orders/{id}`. Retrieve a purchase order.
+- `client.qbd.purchase_orders.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/purchase-orders/{id}/custom-fields`. Set a custom field on a purchase order.
 - `client.qbd.purchase_orders.update(id, revision_number=..., **params) -> PurchaseOrder`: `POST /v1/quickbooks-desktop/purchase-orders/{id}`. Update a purchase order.
 
 ## Receive payments operations
@@ -417,6 +574,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.receive_payments.delete(id) -> ReceivePaymentDeleted`: `DELETE /v1/quickbooks-desktop/receive-payments/{id}`. Delete a received payment.
 - `client.qbd.receive_payments.list(**params) -> CursorPager[ReceivePayment]`: `GET /v1/quickbooks-desktop/receive-payments`. List received payments.
 - `client.qbd.receive_payments.retrieve(id) -> ReceivePayment`: `GET /v1/quickbooks-desktop/receive-payments/{id}`. Retrieve a received payment.
+- `client.qbd.receive_payments.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/receive-payments/{id}/custom-fields`. Set a custom field on a received payment.
 - `client.qbd.receive_payments.update(id, revision_number=..., **params) -> ReceivePayment`: `POST /v1/quickbooks-desktop/receive-payments/{id}`. Update a received payment.
 
 ## Reports operations
@@ -442,6 +600,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.sales_orders.delete(id) -> SalesOrderDeleted`: `DELETE /v1/quickbooks-desktop/sales-orders/{id}`. Delete a sales order.
 - `client.qbd.sales_orders.list(**params) -> CursorPager[SalesOrder]`: `GET /v1/quickbooks-desktop/sales-orders`. List sales orders.
 - `client.qbd.sales_orders.retrieve(id) -> SalesOrder`: `GET /v1/quickbooks-desktop/sales-orders/{id}`. Retrieve a sales order.
+- `client.qbd.sales_orders.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/sales-orders/{id}/custom-fields`. Set a custom field on a sales order.
 - `client.qbd.sales_orders.update(id, revision_number=..., **params) -> SalesOrder`: `POST /v1/quickbooks-desktop/sales-orders/{id}`. Update a sales order.
 
 ## Sales receipts operations
@@ -452,6 +611,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.sales_receipts.delete(id) -> SalesReceiptDeleted`: `DELETE /v1/quickbooks-desktop/sales-receipts/{id}`. Delete a sales receipt.
 - `client.qbd.sales_receipts.list(**params) -> CursorPager[SalesReceipt]`: `GET /v1/quickbooks-desktop/sales-receipts`. List sales receipts.
 - `client.qbd.sales_receipts.retrieve(id) -> SalesReceipt`: `GET /v1/quickbooks-desktop/sales-receipts/{id}`. Retrieve a sales receipt.
+- `client.qbd.sales_receipts.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/sales-receipts/{id}/custom-fields`. Set a custom field on a sales receipt.
 - `client.qbd.sales_receipts.update(id, revision_number=..., **params) -> SalesReceipt`: `POST /v1/quickbooks-desktop/sales-receipts/{id}`. Update a sales receipt.
 - `client.qbd.sales_receipts.void(id) -> SalesReceiptVoided`: `POST /v1/quickbooks-desktop/sales-receipts/{id}/void`. Void a sales receipt.
 
@@ -460,6 +620,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.sales_representatives`
 
 - `client.qbd.sales_representatives.create(initial=..., entity_id=..., **params) -> SalesRepresentative`: `POST /v1/quickbooks-desktop/sales-representatives`. Create a sales representative.
+- `client.qbd.sales_representatives.delete(id, confirm=...) -> SalesRepresentativeDeleted`: `DELETE /v1/quickbooks-desktop/sales-representatives/{id}`. Delete a sales representative.
 - `client.qbd.sales_representatives.list(**params) -> SalesRepresentativeList`: `GET /v1/quickbooks-desktop/sales-representatives`. List sales representatives.
 - `client.qbd.sales_representatives.retrieve(id) -> SalesRepresentative`: `GET /v1/quickbooks-desktop/sales-representatives/{id}`. Retrieve a sales representative.
 - `client.qbd.sales_representatives.update(id, revision_number=..., **params) -> SalesRepresentative`: `POST /v1/quickbooks-desktop/sales-representatives/{id}`. Update a sales representative.
@@ -469,6 +630,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.sales_tax_codes`
 
 - `client.qbd.sales_tax_codes.create(name=..., is_taxable=..., **params) -> SalesTaxCode`: `POST /v1/quickbooks-desktop/sales-tax-codes`. Create a sales tax code.
+- `client.qbd.sales_tax_codes.delete(id, confirm=...) -> SalesTaxCodeDeleted`: `DELETE /v1/quickbooks-desktop/sales-tax-codes/{id}`. Delete a sales tax code.
 - `client.qbd.sales_tax_codes.list(**params) -> SalesTaxCodeList`: `GET /v1/quickbooks-desktop/sales-tax-codes`. List sales tax codes.
 - `client.qbd.sales_tax_codes.retrieve(id) -> SalesTaxCode`: `GET /v1/quickbooks-desktop/sales-tax-codes/{id}`. Retrieve a sales tax code.
 - `client.qbd.sales_tax_codes.update(id, revision_number=..., **params) -> SalesTaxCode`: `POST /v1/quickbooks-desktop/sales-tax-codes/{id}`. Update a sales tax code.
@@ -478,8 +640,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.sales_tax_group_items`
 
 - `client.qbd.sales_tax_group_items.create(name=..., sales_tax_item_ids=..., **params) -> SalesTaxGroupItem`: `POST /v1/quickbooks-desktop/sales-tax-group-items`. Create a sales tax group item.
+- `client.qbd.sales_tax_group_items.delete(id, confirm=...) -> SalesTaxGroupItemDeleted`: `DELETE /v1/quickbooks-desktop/sales-tax-group-items/{id}`. Delete a sales tax group item.
 - `client.qbd.sales_tax_group_items.list(**params) -> CursorPager[SalesTaxGroupItem]`: `GET /v1/quickbooks-desktop/sales-tax-group-items`. List sales tax group items.
+- `client.qbd.sales_tax_group_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/sales-tax-group-items/{id}/merge`. Merge a sales tax group item into another.
 - `client.qbd.sales_tax_group_items.retrieve(id) -> SalesTaxGroupItem`: `GET /v1/quickbooks-desktop/sales-tax-group-items/{id}`. Retrieve a sales tax group item.
+- `client.qbd.sales_tax_group_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/sales-tax-group-items/{id}/custom-fields`. Set a custom field on a sales tax group item.
 - `client.qbd.sales_tax_group_items.update(id, revision_number=..., **params) -> SalesTaxGroupItem`: `POST /v1/quickbooks-desktop/sales-tax-group-items/{id}`. Update a sales tax group item.
 
 ## Sales tax items operations
@@ -487,8 +652,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.sales_tax_items`
 
 - `client.qbd.sales_tax_items.create(name=..., **params) -> SalesTaxItem`: `POST /v1/quickbooks-desktop/sales-tax-items`. Create a sales tax item.
+- `client.qbd.sales_tax_items.delete(id, confirm=...) -> SalesTaxItemDeleted`: `DELETE /v1/quickbooks-desktop/sales-tax-items/{id}`. Delete a sales tax item.
 - `client.qbd.sales_tax_items.list(**params) -> CursorPager[SalesTaxItem]`: `GET /v1/quickbooks-desktop/sales-tax-items`. List sales tax items.
+- `client.qbd.sales_tax_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/sales-tax-items/{id}/merge`. Merge a sales tax item into another.
 - `client.qbd.sales_tax_items.retrieve(id) -> SalesTaxItem`: `GET /v1/quickbooks-desktop/sales-tax-items/{id}`. Retrieve a sales tax item.
+- `client.qbd.sales_tax_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/sales-tax-items/{id}/custom-fields`. Set a custom field on a sales tax item.
 - `client.qbd.sales_tax_items.update(id, revision_number=..., **params) -> SalesTaxItem`: `POST /v1/quickbooks-desktop/sales-tax-items/{id}`. Update a sales tax item.
 
 ## Sales tax payment checks operations
@@ -499,6 +667,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.sales_tax_payment_checks.delete(id) -> SalesTaxPaymentCheckDeleted`: `DELETE /v1/quickbooks-desktop/sales-tax-payment-checks/{id}`. Delete a sales tax payment check.
 - `client.qbd.sales_tax_payment_checks.list(**params) -> CursorPager[SalesTaxPaymentCheck]`: `GET /v1/quickbooks-desktop/sales-tax-payment-checks`. List sales tax payment checks.
 - `client.qbd.sales_tax_payment_checks.retrieve(id) -> SalesTaxPaymentCheck`: `GET /v1/quickbooks-desktop/sales-tax-payment-checks/{id}`. Retrieve a sales tax payment check.
+- `client.qbd.sales_tax_payment_checks.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/sales-tax-payment-checks/{id}/custom-fields`. Set a custom field on a sales tax payment check.
 - `client.qbd.sales_tax_payment_checks.update(id, revision_number=..., **params) -> SalesTaxPaymentCheck`: `POST /v1/quickbooks-desktop/sales-tax-payment-checks/{id}`. Update a sales tax payment check.
 
 ## Service items operations
@@ -506,8 +675,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.service_items`
 
 - `client.qbd.service_items.create(name=..., **params) -> ServiceItem`: `POST /v1/quickbooks-desktop/service-items`. Create a service item.
+- `client.qbd.service_items.delete(id, confirm=...) -> ServiceItemDeleted`: `DELETE /v1/quickbooks-desktop/service-items/{id}`. Delete a service item.
 - `client.qbd.service_items.list(**params) -> CursorPager[ServiceItem]`: `GET /v1/quickbooks-desktop/service-items`. List service items.
+- `client.qbd.service_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/service-items/{id}/merge`. Merge a service item into another.
 - `client.qbd.service_items.retrieve(id) -> ServiceItem`: `GET /v1/quickbooks-desktop/service-items/{id}`. Retrieve a service item.
+- `client.qbd.service_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/service-items/{id}/custom-fields`. Set a custom field on a service item.
 - `client.qbd.service_items.update(id, revision_number=..., **params) -> ServiceItem`: `POST /v1/quickbooks-desktop/service-items/{id}`. Update a service item.
 
 ## Shipping methods operations
@@ -515,6 +687,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.shipping_methods`
 
 - `client.qbd.shipping_methods.create(name=..., **params) -> ShippingMethod`: `POST /v1/quickbooks-desktop/shipping-methods`. Create a shipping method.
+- `client.qbd.shipping_methods.delete(id, confirm=...) -> ShippingMethodDeleted`: `DELETE /v1/quickbooks-desktop/shipping-methods/{id}`. Delete a shipping method.
 - `client.qbd.shipping_methods.list(**params) -> ShippingMethodList`: `GET /v1/quickbooks-desktop/shipping-methods`. List shipping methods.
 - `client.qbd.shipping_methods.retrieve(id) -> ShippingMethod`: `GET /v1/quickbooks-desktop/shipping-methods/{id}`. Retrieve a shipping method.
 
@@ -523,16 +696,32 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.standard_terms`
 
 - `client.qbd.standard_terms.create(name=..., **params) -> StandardTerm`: `POST /v1/quickbooks-desktop/standard-terms`. Create a standard term.
+- `client.qbd.standard_terms.delete(id, confirm=...) -> StandardTermDeleted`: `DELETE /v1/quickbooks-desktop/standard-terms/{id}`. Delete a standard term.
 - `client.qbd.standard_terms.list(**params) -> StandardTermList`: `GET /v1/quickbooks-desktop/standard-terms`. List standard terms.
 - `client.qbd.standard_terms.retrieve(id) -> StandardTerm`: `GET /v1/quickbooks-desktop/standard-terms/{id}`. Retrieve a standard term.
+
+## Statement charges operations
+
+`client.qbd.statement_charges`
+
+- `client.qbd.statement_charges.create(customer_id=..., **params) -> StatementCharge`: `POST /v1/quickbooks-desktop/statement-charges`. Create a statement charge.
+- `client.qbd.statement_charges.delete(id) -> StatementChargeDeleted`: `DELETE /v1/quickbooks-desktop/statement-charges/{id}`. Delete a statement charge.
+- `client.qbd.statement_charges.list(**params) -> CursorPager[StatementCharge]`: `GET /v1/quickbooks-desktop/statement-charges`. List statement charges.
+- `client.qbd.statement_charges.retrieve(id) -> StatementCharge`: `GET /v1/quickbooks-desktop/statement-charges/{id}`. Retrieve a statement charge.
+- `client.qbd.statement_charges.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/statement-charges/{id}/custom-fields`. Set a custom field on a statement charge.
+- `client.qbd.statement_charges.update(id, revision_number=..., **params) -> StatementCharge`: `POST /v1/quickbooks-desktop/statement-charges/{id}`. Update a statement charge.
+- `client.qbd.statement_charges.void(id) -> StatementChargeVoided`: `POST /v1/quickbooks-desktop/statement-charges/{id}/void`. Void a statement charge.
 
 ## Subtotal items operations
 
 `client.qbd.subtotal_items`
 
 - `client.qbd.subtotal_items.create(name=..., **params) -> SubtotalItem`: `POST /v1/quickbooks-desktop/subtotal-items`. Create a subtotal item.
+- `client.qbd.subtotal_items.delete(id, confirm=...) -> SubtotalItemDeleted`: `DELETE /v1/quickbooks-desktop/subtotal-items/{id}`. Delete a subtotal item.
 - `client.qbd.subtotal_items.list(**params) -> CursorPager[SubtotalItem]`: `GET /v1/quickbooks-desktop/subtotal-items`. List subtotal items.
+- `client.qbd.subtotal_items.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/subtotal-items/{id}/merge`. Merge a subtotal item into another.
 - `client.qbd.subtotal_items.retrieve(id) -> SubtotalItem`: `GET /v1/quickbooks-desktop/subtotal-items/{id}`. Retrieve a subtotal item.
+- `client.qbd.subtotal_items.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/subtotal-items/{id}/custom-fields`. Set a custom field on a subtotal item.
 - `client.qbd.subtotal_items.update(id, revision_number=..., **params) -> SubtotalItem`: `POST /v1/quickbooks-desktop/subtotal-items/{id}`. Update a subtotal item.
 
 ## Templates operations
@@ -551,12 +740,23 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.time_tracking_activities.retrieve(id) -> TimeTrackingActivity`: `GET /v1/quickbooks-desktop/time-tracking-activities/{id}`. Retrieve a time tracking activity.
 - `client.qbd.time_tracking_activities.update(id, revision_number=..., entity_id=..., duration=..., **params) -> TimeTrackingActivity`: `POST /v1/quickbooks-desktop/time-tracking-activities/{id}`. Update a time tracking activity.
 
+## To-dos operations
+
+`client.qbd.to_dos`
+
+- `client.qbd.to_dos.create(note=..., **params) -> ToDo`: `POST /v1/quickbooks-desktop/to-dos`. Create a to-do.
+- `client.qbd.to_dos.delete(id, confirm=...) -> ToDoDeleted`: `DELETE /v1/quickbooks-desktop/to-dos/{id}`. Delete a to-do.
+- `client.qbd.to_dos.list(**params) -> ToDoList`: `GET /v1/quickbooks-desktop/to-dos`. List to-dos.
+- `client.qbd.to_dos.retrieve(id) -> ToDo`: `GET /v1/quickbooks-desktop/to-dos/{id}`. Retrieve a to-do.
+- `client.qbd.to_dos.update(id, revision_number=..., **params) -> ToDo`: `POST /v1/quickbooks-desktop/to-dos/{id}`. Update a to-do.
+
 ## Transactions operations
 
 `client.qbd.transactions`
 
 - `client.qbd.transactions.list(**params) -> CursorPager[Transaction]`: `GET /v1/quickbooks-desktop/transactions`. List transactions.
 - `client.qbd.transactions.retrieve(id) -> Transaction`: `GET /v1/quickbooks-desktop/transactions/{id}`. Retrieve a transaction.
+- `client.qbd.transactions.update_cleared_status(id, cleared_status=..., **params) -> ClearedStatus`: `POST /v1/quickbooks-desktop/transactions/{id}/cleared-status`. Update the cleared status of a transaction.
 
 ## Transfers operations
 
@@ -572,8 +772,28 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.unit_of_measure_sets`
 
 - `client.qbd.unit_of_measure_sets.create(name=..., unit_of_measure_type=..., base_unit=..., **params) -> UnitOfMeasureSet`: `POST /v1/quickbooks-desktop/unit-of-measure-sets`. Create an unit of measure set.
+- `client.qbd.unit_of_measure_sets.delete(id, confirm=...) -> UnitOfMeasureSetDeleted`: `DELETE /v1/quickbooks-desktop/unit-of-measure-sets/{id}`. Delete an unit of measure set.
 - `client.qbd.unit_of_measure_sets.list(**params) -> UnitOfMeasureSetList`: `GET /v1/quickbooks-desktop/unit-of-measure-sets`. List unit of measure sets.
 - `client.qbd.unit_of_measure_sets.retrieve(id) -> UnitOfMeasureSet`: `GET /v1/quickbooks-desktop/unit-of-measure-sets/{id}`. Retrieve an unit of measure set.
+
+## Vehicle mileage operations
+
+`client.qbd.vehicle_mileage`
+
+- `client.qbd.vehicle_mileage.create(vehicle_id=..., **params) -> VehicleMileage`: `POST /v1/quickbooks-desktop/vehicle-mileage`. Create a vehicle mileage entry.
+- `client.qbd.vehicle_mileage.delete(id) -> VehicleMileageDeleted`: `DELETE /v1/quickbooks-desktop/vehicle-mileage/{id}`. Delete a vehicle mileage entry.
+- `client.qbd.vehicle_mileage.list(**params) -> CursorPager[VehicleMileage]`: `GET /v1/quickbooks-desktop/vehicle-mileage`. List vehicle mileage entries.
+- `client.qbd.vehicle_mileage.retrieve(id) -> VehicleMileage`: `GET /v1/quickbooks-desktop/vehicle-mileage/{id}`. Retrieve a vehicle mileage entry.
+
+## Vehicles operations
+
+`client.qbd.vehicles`
+
+- `client.qbd.vehicles.create(name=..., **params) -> Vehicle`: `POST /v1/quickbooks-desktop/vehicles`. Create a vehicle.
+- `client.qbd.vehicles.delete(id, confirm=...) -> VehicleDeleted`: `DELETE /v1/quickbooks-desktop/vehicles/{id}`. Delete a vehicle.
+- `client.qbd.vehicles.list(**params) -> VehicleList`: `GET /v1/quickbooks-desktop/vehicles`. List vehicles.
+- `client.qbd.vehicles.retrieve(id) -> Vehicle`: `GET /v1/quickbooks-desktop/vehicles/{id}`. Retrieve a vehicle.
+- `client.qbd.vehicles.update(id, revision_number=..., **params) -> Vehicle`: `POST /v1/quickbooks-desktop/vehicles/{id}`. Update a vehicle.
 
 ## Vendor credits operations
 
@@ -583,6 +803,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.qbd.vendor_credits.delete(id) -> VendorCreditDeleted`: `DELETE /v1/quickbooks-desktop/vendor-credits/{id}`. Delete a vendor credit.
 - `client.qbd.vendor_credits.list(**params) -> CursorPager[VendorCredit]`: `GET /v1/quickbooks-desktop/vendor-credits`. List vendor credits.
 - `client.qbd.vendor_credits.retrieve(id) -> VendorCredit`: `GET /v1/quickbooks-desktop/vendor-credits/{id}`. Retrieve a vendor credit.
+- `client.qbd.vendor_credits.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/vendor-credits/{id}/custom-fields`. Set a custom field on a vendor credit.
 - `client.qbd.vendor_credits.update(id, revision_number=..., **params) -> VendorCredit`: `POST /v1/quickbooks-desktop/vendor-credits/{id}`. Update a vendor credit.
 - `client.qbd.vendor_credits.void(id) -> VendorCreditVoided`: `POST /v1/quickbooks-desktop/vendor-credits/{id}/void`. Void a vendor credit.
 
@@ -591,9 +812,31 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.vendors`
 
 - `client.qbd.vendors.create(name=..., **params) -> Vendor`: `POST /v1/quickbooks-desktop/vendors`. Create a vendor.
+- `client.qbd.vendors.delete(id, confirm=...) -> VendorDeleted`: `DELETE /v1/quickbooks-desktop/vendors/{id}`. Delete a vendor.
 - `client.qbd.vendors.list(**params) -> CursorPager[Vendor]`: `GET /v1/quickbooks-desktop/vendors`. List vendors.
+- `client.qbd.vendors.merge(id, revision_number=..., merge_into_id=..., merge_into_revision_number=..., confirm=...) -> ListMerge`: `POST /v1/quickbooks-desktop/vendors/{id}/merge`. Merge a vendor into another.
 - `client.qbd.vendors.retrieve(id) -> Vendor`: `GET /v1/quickbooks-desktop/vendors/{id}`. Retrieve a vendor.
+- `client.qbd.vendors.set_custom_field(id, operation=..., name=..., **params) -> CustomFieldValue`: `POST /v1/quickbooks-desktop/vendors/{id}/custom-fields`. Set a custom field on a vendor.
 - `client.qbd.vendors.update(id, revision_number=..., **params) -> Vendor`: `POST /v1/quickbooks-desktop/vendors/{id}`. Update a vendor.
+
+## Vendor types operations
+
+`client.qbd.vendor_types`
+
+- `client.qbd.vendor_types.create(name=..., **params) -> VendorType`: `POST /v1/quickbooks-desktop/vendor-types`. Create a vendor type.
+- `client.qbd.vendor_types.delete(id, confirm=...) -> VendorTypeDeleted`: `DELETE /v1/quickbooks-desktop/vendor-types/{id}`. Delete a vendor type.
+- `client.qbd.vendor_types.list(**params) -> VendorTypeList`: `GET /v1/quickbooks-desktop/vendor-types`. List vendor types.
+- `client.qbd.vendor_types.retrieve(id) -> VendorType`: `GET /v1/quickbooks-desktop/vendor-types/{id}`. Retrieve a vendor type.
+
+## Workers' comp codes operations
+
+`client.qbd.workers_comp_codes`
+
+- `client.qbd.workers_comp_codes.create(name=..., rates=..., **params) -> WorkersCompCode`: `POST /v1/quickbooks-desktop/workers-comp-codes`. Create a workers' compensation code.
+- `client.qbd.workers_comp_codes.delete(id, confirm=...) -> WorkersCompCodeDeleted`: `DELETE /v1/quickbooks-desktop/workers-comp-codes/{id}`. Delete a workers' compensation code.
+- `client.qbd.workers_comp_codes.list(**params) -> WorkersCompCodeList`: `GET /v1/quickbooks-desktop/workers-comp-codes`. List workers' compensation codes.
+- `client.qbd.workers_comp_codes.retrieve(id) -> WorkersCompCode`: `GET /v1/quickbooks-desktop/workers-comp-codes/{id}`. Retrieve a workers' compensation code.
+- `client.qbd.workers_comp_codes.update(id, revision_number=..., **params) -> WorkersCompCode`: `POST /v1/quickbooks-desktop/workers-comp-codes/{id}`. Update a workers' compensation code.
 
 ## Requests operations
 
