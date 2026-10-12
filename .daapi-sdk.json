@@ -1,19 +1,19 @@
 {
   "repository": "DesktopAccountingAPI/quickbooks-desktop-python",
-  "sdkVersion": "0.6.0",
+  "sdkVersion": "0.7.0",
   "generator": {
     "name": "packages/sdk-generator",
     "version": "1.0.0"
   },
   "contract": {
     "path": "packages/api-contract/generated/openapi.json",
-    "sha256": "45acc3e65d061637d822de0a61f91477480397e20e2ed48fd6bdf937333b1a3f",
+    "sha256": "f4cd9b5c733eeada3d1a452ca3a11144f0d4b560ed58a595281cf54780b20691",
     "openapi": "3.1.0",
     "apiVersion": "1.0.0"
   },
-  "operations": 433,
-  "models": 674,
-  "enums": 242,
+  "operations": 439,
+  "models": 1669,
+  "enums": 252,
   "generatedFiles": [
     "api.md",
     "conformance/fixtures/api-keys.json",
@@ -24,6 +24,7 @@
     "src/desktopaccountingapi/_error_codes.py",
     "src/desktopaccountingapi/resources/__init__.py",
     "src/desktopaccountingapi/resources/auth_sessions.py",
+    "src/desktopaccountingapi/resources/change_feed_subscriptions.py",
     "src/desktopaccountingapi/resources/end_users.py",
     "src/desktopaccountingapi/resources/qbd/__init__.py",
     "src/desktopaccountingapi/resources/qbd/account_tax_lines.py",

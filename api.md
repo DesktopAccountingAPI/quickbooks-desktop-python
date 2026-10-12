@@ -2,7 +2,7 @@
 
 # API reference
 
-Every method of `DesktopAccountingApi`, generated from the API contract (433 operations, contract `sha256:45acc3e65d06`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
+Every method of `DesktopAccountingApi`, generated from the API contract (439 operations, contract `sha256:f4cd9b5c733e`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
 
 Every method also accepts the keyword arguments `timeout`, `total_timeout` and `max_retries`; QuickBooks Desktop operations accept `end_user_id` (or Conductor's `conductor_end_user_id`) and `server_timeout`, and writes accept `idempotency_key`. Non-paginated methods are available under `with_raw_response`, and async-capable ones under `enqueue` (returning a `RequestHandle`).
 
@@ -11,6 +11,16 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.auth_sessions`
 
 - `client.auth_sessions.create(publishable_key=..., end_user_id=..., **params) -> AuthSession`: `POST /v1/auth-sessions`. Create an auth session.
+
+## Change feed operations
+
+`client.change_feed_subscriptions`
+
+- `client.change_feed_subscriptions.create(resources=..., **params) -> ChangeFeedSubscription`: `POST /v1/change-feed-subscriptions`. Create a change feed subscription.
+- `client.change_feed_subscriptions.delete(id) -> ChangeFeedSubscriptionDeleted`: `DELETE /v1/change-feed-subscriptions/{id}`. Delete a change feed subscription.
+- `client.change_feed_subscriptions.list(**params) -> CursorPager[ChangeFeedSubscription]`: `GET /v1/change-feed-subscriptions`. List change feed subscriptions.
+- `client.change_feed_subscriptions.retrieve(id) -> ChangeFeedSubscription`: `GET /v1/change-feed-subscriptions/{id}`. Retrieve a change feed subscription.
+- `client.change_feed_subscriptions.update(id, **params) -> ChangeFeedSubscription`: `POST /v1/change-feed-subscriptions/{id}`. Update a change feed subscription.
 
 ## EndUsers operations
 
@@ -28,10 +38,11 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.end_users.retrieve_connection(id) -> EndUserConnection`: `GET /v1/end-users/{id}/connection`. Retrieve the connection.
 - `client.end_users.update(id, **params) -> EndUser`: `POST /v1/end-users/{id}`. Update an end user.
 
-## Health check operations
+## Qbd operations
 
 `client.qbd`
 
+- `client.qbd.batch(requests=..., **params) -> Batch`: `POST /v1/quickbooks-desktop/batch`. Run several operations in one round trip.
 - `client.qbd.health_check() -> HealthCheck`: `GET /v1/quickbooks-desktop/health-check`. Check the QuickBooks Desktop connection.
 
 ## Accounts operations
