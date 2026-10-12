@@ -83,6 +83,28 @@ def _model_class(annotation: str) -> Optional[type[WireModel]]:
     return None
 
 
+def _singular(resource: str) -> str:
+    """Same rule as the generator's type names (packages/sdk-generator/src/spec.ts singular)."""
+    if resource.endswith("ies"):
+        return resource[:-3] + "y"
+    if re.search(r"(?:ss|x|ch|sh)es$", resource):
+        return resource[:-2]
+    if resource.endswith("s") and not resource.endswith("ss"):
+        return resource[:-1]
+    return resource
+
+
+def _batch_member_class(annotation: str, value: Mapping[str, Any]) -> Optional[type[WireModel]]:
+    """The member class of a batch request (``BatchRequestInput``) for its ``operationId``."""
+    if "BatchRequestInput" not in annotation or "operationId" not in value:
+        return None
+    _, resource, verb = str(value["operationId"]).split(".")
+    name = f"Batch{_singular(resource)[:1].upper()}{_singular(resource)[1:]}{verb[:1].upper()}{verb[1:]}Input"
+    cls = getattr(daapi_types, name, None)
+    assert isinstance(cls, type) and issubclass(cls, WireModel), f"no batch member class for {value['operationId']}"
+    return cls
+
+
 def _convert(value: Any, annotation: str) -> Any:
     if value is None:
         return None
@@ -90,6 +112,12 @@ def _convert(value: Any, annotation: str) -> Any:
         inner = re.search(r"Sequence\[(.*)\]", annotation)
         return [_convert(v, inner.group(1) if inner else annotation) for v in value]
     if isinstance(value, Mapping):
+        member = _batch_member_class(annotation, value)
+        if member is not None:
+            # The member class sets its own operation_id.
+            obj = member(**_kwargs(member.__init__, {k: v for k, v in value.items() if k != "operationId"}))
+            assert getattr(obj, "operation_id", None) == value["operationId"]
+            return obj
         cls = _model_class(annotation)
         if cls is None:
             return dict(value)
@@ -293,6 +321,9 @@ def _wire(value: Any) -> Any:
 def _dotted(data: Any, path: str) -> Any:
     current = data
     for part in path.split("."):
+        if isinstance(current, list) and part.isdigit() and int(part) < len(current):
+            current = current[int(part)]
+            continue
         if not isinstance(current, Mapping) or part not in current:
             raise AssertionError(f"result has no {path!r}: {json.dumps(data)[:300]}")
         current = current[part]
@@ -346,6 +377,10 @@ def check_outcome(scenario: Mapping[str, Any], seen: Observed) -> None:
         assert seen.text == outcome["text"]
     if "variant" in outcome:
         assert type(seen.result).__name__ == outcome["variant"]
+    if "resultVariants" in outcome:
+        results = getattr(seen.result, "results", None)
+        assert results is not None, "no results"
+        assert [type(r).__name__ for r in results] == outcome["resultVariants"]
     if "items" in outcome:
         assert seen.items is not None
         assert [item.id for item in seen.items] == outcome["items"]

@@ -85,6 +85,7 @@ Operations and parameter shapes used by the fixtures:
 | `endUsers.list` | | `limit` |
 | `endUsers.passthrough` | `id` | free-form JSON body |
 | `requests.retrieve` | `id` | |
+| `qbd.batch` | | `onError`, `requests[]` of typed members `{ operationId, pathParams?, query?, body? }`: build each member as the SDK's member class for its `operationId` (Node.js: the object as is) |
 
 Convert params to the SDK's native types. Decimal strings become the native decimal type and dates become the native date type. A key present with `null` is an explicit null, and an absent key is not set. The runner fails if a decimal is sent as anything other than the expected string.
 
@@ -123,6 +124,7 @@ The runner compares only the keys that are present.
 - `text`: the exact text returned by an `xml` call.
 - `items`: the `id`s of the items yielded by `iterate`, in order.
 - `variant`: the SDK class of the result of an operation that returns a discriminated union (`qbd.items.retrieve` returns `Item`): the model of its `objectType` (`ServiceItem`), or the union's fallback for a kind the SDK does not know (`UnknownItem`). `itemVariants` is the same for each item yielded by `iterate`. The Node.js SDK returns plain JSON typed as a TypeScript union, so it has no class to check.
+- `resultVariants`: the SDK class of each element of a batch result's `results` (`qbd.batch`): the result class of its `operationId` (`BatchCustomerCreateResult`), or the result union's fallback (`UnknownBatchResult`) for an operation the SDK does not know. Node.js returns plain JSON typed per member, so it has no class to check.
 - `page`: `ids`, `nextCursor`, `hasMore`, `remainingCount` of the first page.
 - `handle`: `id` and `status` of the request handle returned by `enqueue`.
 - `response`: `status`, `requestId` (the SDK's reported request ID: `Daapi-Request-Id`, or after a long poll the timed-out request's `details.requestId`) and `headers` (lowercase name to value).

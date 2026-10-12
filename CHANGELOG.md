@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.7.0 (2026-10-12)
+
+- New `client.qbd.batch()`: up to 25 typed QuickBooks Desktop operations in one Web Connector round trip. Each member is the member class of its operation (`BatchCustomerCreateInput(body=CustomerCreateInput(...))`, which sets `operation_id` itself), and each result is an instance of its operation's result class (`BatchCustomerCreateResult`, whose `data` is a `Customer`), or `UnknownBatchResult` for an operation added later. One idempotency key covers the batch; a lost response raises `OutcomeUnknownError` with `details["members"]` and is never retried.
+- A batch whose response was lost and whose create members the API later found in QuickBooks by their `external_id` returns each such member with `data` `None` and the record's QuickBooks ID in `recovered_object_id` (on every batch result: `str | None`), on `client.requests.retrieve()` and on an idempotent replay.
+- New error code `QBD_REQUEST_NOT_PROCESSED` (`ErrorCode.QBD_REQUEST_NOT_PROCESSED`): `409`, not retryable. QuickBooks skipped a batch member because an earlier member failed under `stopOnError` (status 3231).
+- **Breaking (types only):** the credit card request info of receive payments is the model `QbdRequest`. It was parsed as the request resource model `Request` by mistake, so its fields read as None.
+- Change feed subscriptions: `client.change_feed_subscriptions.create()`, `.list()`, `.retrieve()`, `.update()` and `.delete()` (`/v1/change-feed-subscriptions`). A subscription polls every connected end user of the project for changed and deleted records of the listed resources and sends `data.changed` webhooks with their IDs. New webhook event type `EventType.DATA_CHANGED` (`data.changed`). New error code `CHANGE_FEED_SUBSCRIPTION_LIMIT_REACHED` (`422`, not retryable).
+
 ## 0.6.0 (2026-10-12)
 
 - **Breaking:** the list parameters type of `qbd.classes.list` is renamed from `ClasseListParams` to `ClassListParams` (the generator dropped only the final "s" of "classes"). Rename the type in your code; nothing else changes. No other type name was affected.
