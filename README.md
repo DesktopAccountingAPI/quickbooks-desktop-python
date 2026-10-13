@@ -2,7 +2,7 @@
 
 The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.com/), a REST API for QuickBooks Desktop and QuickBooks Enterprise. Your server makes typed calls such as `client.qbd.invoices.create(...)`, and Desktop Accounting API delivers them to your customer's company file through the QuickBooks Web Connector.
 
-- Covers all 439 operations of API 1.0.0: QuickBooks objects and reports (`client.qbd`), end users, auth sessions, request tracking, qbXML passthrough and webhook verification.
+- Covers all 438 operations of API 1.0.0: QuickBooks objects and reports (`client.qbd`), end users, auth sessions, request tracking, qbXML passthrough and webhook verification.
 - Frozen dataclass models, keyword-only arguments, `Literal` enums, `mypy --strict` clean, a synchronous and an asyncio client.
 - Amounts are `decimal.Decimal`, never `float`.
 - Every write carries an idempotency key, retries happen only where they cannot duplicate data, and an expired QuickBooks cursor never restarts a list silently.
@@ -15,12 +15,12 @@ The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.
 pip install desktopaccountingapi-quickbooks-desktop
 ```
 
-The current version is **0.7.0**. To pin it exactly:
+The current version is **0.8.0**. To pin it exactly:
 
 ```sh
-pip install "desktopaccountingapi-quickbooks-desktop==0.7.0"
-uv add "desktopaccountingapi-quickbooks-desktop==0.7.0"
-poetry add "desktopaccountingapi-quickbooks-desktop==0.7.0"
+pip install "desktopaccountingapi-quickbooks-desktop==0.8.0"
+uv add "desktopaccountingapi-quickbooks-desktop==0.8.0"
+poetry add "desktopaccountingapi-quickbooks-desktop==0.8.0"
 ```
 
 The distribution is `desktopaccountingapi-quickbooks-desktop`; the import package is `desktopaccountingapi`.
@@ -317,6 +317,16 @@ except CursorExpiredError as error:
 
 Lists without cursor pagination (accounts, classes, terms and other small lists) return the whole list. The [pagination guide](https://www.desktopaccountingapi.com/docs/guides/pagination/) explains cursor lifetimes.
 
+### Required arguments and confirmations
+
+- Required parameters are keyword arguments without a default, so leaving one out raises `TypeError` and mypy reports it. The SDK does not validate values itself (lengths, formats, combinations of filters): the API checks every request and answers `400 INVALID_PARAMETER`, naming the parameter, before anything reaches QuickBooks.
+- Destructive operations need `confirm=True`, typed `Literal[True]`: `client.qbd.customers.delete(id, confirm=True)`.
+- Methods take keyword arguments. The models of whole request bodies and query strings are not exported; models nested in a request (`InvoiceLineCreateInput`) are.
+- Transaction deletes and voids take no confirmation, as in Conductor. Deleting a list record, merging two records and deleting a custom field definition do, because they cannot be undone.
+- A list-record delete answers `deleted: true` only when QuickBooks removed the record. QuickBooks Desktop can accept the delete and keep the record inactive: then `deleted` is false and `deactivated` is true.
+- Quantities (`quantityCanBuild`, `totalMiles`, line quantities) can have decimals: QuickBooks stores them as decimal quantities, and units of measure allow fractions.
+- `CursorExpiredError` is an `InvalidRequestError`, because the API classifies `CURSOR_EXPIRED` as `INVALID_REQUEST_ERROR`. Catch it first when you handle the two differently; `err.reason` is a `CursorExpiredReason`.
+
 ## Errors
 
 Every error is a `DaapiError`. Problems found before sending (missing key, malformed key, missing end user) raise `DaapiError` itself. Error responses raise `APIError` or the subclass for their `type`:
@@ -511,7 +521,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 - The Python, Node.js, .NET and Java SDKs and the [MCP server](https://github.com/DesktopAccountingAPI/quickbooks-desktop-mcp) are released together with the same version number, generated from the same API contract.
 - Every release is listed in [CHANGELOG.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CHANGELOG.md) and tagged `v<version>` on GitHub.
 - The API is versioned in its path (`/v1`). Within `v1` the API only adds operations, fields, enum values and error codes, and the SDK tolerates all of them, so older SDK versions keep working.
-- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:f4cd9b5c733e...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
+- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:149fc7b0599d...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
 
 ## Support
 
@@ -525,7 +535,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 
 The toolchain is pinned in `mise.toml`. `mise run check` installs the pinned dev tools with uv and runs ruff, `mypy --strict`, the unit tests, the cross-language conformance suite (against `conformance/mock-server.mjs`), the example type checks, the README samples (`mypy --strict` on every Python block of this file, and the quickstart against the mock server) and a build plus clean install of the wheel. Set `UV_PYTHON=3.9` (or any supported version) to run it on another interpreter.
 
-To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.7.0"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
+To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.8.0"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
 
 ## License
 
