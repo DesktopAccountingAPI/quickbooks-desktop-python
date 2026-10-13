@@ -2,7 +2,7 @@
 
 # API reference
 
-Every method of `DesktopAccountingApi`, generated from the API contract (439 operations, contract `sha256:f4cd9b5c733e`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
+Every method of `DesktopAccountingApi`, generated from the API contract (438 operations, contract `sha256:149fc7b0599d`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
 
 Every method also accepts the keyword arguments `timeout`, `total_timeout` and `max_retries`; QuickBooks Desktop operations accept `end_user_id` (or Conductor's `conductor_end_user_id`) and `server_timeout`, and writes accept `idempotency_key`. Non-paginated methods are available under `with_raw_response`, and async-capable ones under `enqueue` (returning a `RequestHandle`).
 
@@ -245,9 +245,9 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.custom_field_definitions`
 
 - `client.qbd.custom_field_definitions.create(owner_id=..., name=..., type=..., **params) -> CustomFieldDefinition`: `POST /v1/quickbooks-desktop/custom-field-definitions`. Create a custom field definition.
-- `client.qbd.custom_field_definitions.delete(name, owner_id=..., confirm=...) -> DeletedCustomFieldDefinition`: `DELETE /v1/quickbooks-desktop/custom-field-definitions/{name}`. Request deletion of a private custom field definition.
+- `client.qbd.custom_field_definitions.delete(definition_name, owner_id=..., confirm=...) -> CustomFieldDefinitionDeleted`: `DELETE /v1/quickbooks-desktop/custom-field-definitions/{definitionName}`. Request deletion of a private custom field definition.
 - `client.qbd.custom_field_definitions.list(**params) -> CustomFieldDefinitionList`: `GET /v1/quickbooks-desktop/custom-field-definitions`. List custom field definitions.
-- `client.qbd.custom_field_definitions.update(name, owner_id=..., **params) -> CustomFieldDefinition`: `POST /v1/quickbooks-desktop/custom-field-definitions/{name}`. Update a custom field definition.
+- `client.qbd.custom_field_definitions.update(definition_name, owner_id=..., **params) -> CustomFieldDefinition`: `POST /v1/quickbooks-desktop/custom-field-definitions/{definitionName}`. Update a custom field definition.
 
 ## Date driven terms operations
 
@@ -327,7 +327,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 
 `client.qbd.fixed_asset_items`
 
-- `client.qbd.fixed_asset_items.create(name=..., acquired_as=..., purchase_description=..., purchase_date=..., **params) -> FixedAssetItem`: `POST /v1/quickbooks-desktop/fixed-asset-items`. Create a fixed asset item.
+- `client.qbd.fixed_asset_items.create(name=..., acquired_as=..., purchase_description=..., purchase_date=..., asset_account_id=..., **params) -> FixedAssetItem`: `POST /v1/quickbooks-desktop/fixed-asset-items`. Create a fixed asset item.
 - `client.qbd.fixed_asset_items.delete(id, confirm=...) -> FixedAssetItemDeleted`: `DELETE /v1/quickbooks-desktop/fixed-asset-items/{id}`. Delete a fixed asset item.
 - `client.qbd.fixed_asset_items.list(**params) -> CursorPager[FixedAssetItem]`: `GET /v1/quickbooks-desktop/fixed-asset-items`. List fixed asset items.
 - `client.qbd.fixed_asset_items.retrieve(id) -> FixedAssetItem`: `GET /v1/quickbooks-desktop/fixed-asset-items/{id}`. Retrieve a fixed asset item.
@@ -767,7 +767,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 
 - `client.qbd.transactions.list(**params) -> CursorPager[Transaction]`: `GET /v1/quickbooks-desktop/transactions`. List transactions.
 - `client.qbd.transactions.retrieve(id) -> Transaction`: `GET /v1/quickbooks-desktop/transactions/{id}`. Retrieve a transaction.
-- `client.qbd.transactions.update_cleared_status(id, cleared_status=..., **params) -> ClearedStatus`: `POST /v1/quickbooks-desktop/transactions/{id}/cleared-status`. Update the cleared status of a transaction.
+- `client.qbd.transactions.update_cleared_status(id, cleared_status=..., **params) -> TransactionClearedStatus`: `POST /v1/quickbooks-desktop/transactions/{id}/cleared-status`. Update the cleared status of a transaction.
 
 ## Transfers operations
 
@@ -783,7 +783,6 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 `client.qbd.unit_of_measure_sets`
 
 - `client.qbd.unit_of_measure_sets.create(name=..., unit_of_measure_type=..., base_unit=..., **params) -> UnitOfMeasureSet`: `POST /v1/quickbooks-desktop/unit-of-measure-sets`. Create an unit of measure set.
-- `client.qbd.unit_of_measure_sets.delete(id, confirm=...) -> UnitOfMeasureSetDeleted`: `DELETE /v1/quickbooks-desktop/unit-of-measure-sets/{id}`. Delete an unit of measure set.
 - `client.qbd.unit_of_measure_sets.list(**params) -> UnitOfMeasureSetList`: `GET /v1/quickbooks-desktop/unit-of-measure-sets`. List unit of measure sets.
 - `client.qbd.unit_of_measure_sets.retrieve(id) -> UnitOfMeasureSet`: `GET /v1/quickbooks-desktop/unit-of-measure-sets/{id}`. Retrieve an unit of measure set.
 

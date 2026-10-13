@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 import httpx
 
@@ -255,8 +255,17 @@ class InternalError(APIError):
     """``INTERNAL_ERROR``: a problem on the Desktop Accounting API side."""
 
 
+CursorExpiredReason = Union[Literal["idle_timeout", "session_ended", "quickbooks_restarted", "evicted"], str]
+"""Why a cursor expired (``details.reason``): the QuickBooks iterator was idle too long, its Web Connector
+session ended, QuickBooks restarted, or a newer cursor list evicted it. A value added later arrives as a string."""
+
+
 class CursorExpiredError(InvalidRequestError):
     """``410 CURSOR_EXPIRED``: the QuickBooks iterator behind a list cursor is gone.
+
+    It is an ``InvalidRequestError`` because the API classifies ``CURSOR_EXPIRED`` as
+    ``INVALID_REQUEST_ERROR`` (error classes follow ``error.type``), although its status is 410.
+    Catch it before ``InvalidRequestError`` when you handle the two differently.
 
     The SDK never restarts the list silently, because data may have changed. Restart the same
     query and skip IDs you already processed. Do not resume from ``last_updated_at``: QuickBooks
@@ -273,8 +282,8 @@ class CursorExpiredError(InvalidRequestError):
     """``id`` of the last item yielded, if any."""
     last_updated_at: Optional[str]
     """``updatedAt`` of the last item yielded, exactly as received, if any."""
-    reason: Optional[str]
-    """``details.reason``: ``idle_timeout``, ``session_ended``, ``quickbooks_restarted`` or ``evicted``."""
+    reason: Optional[CursorExpiredReason]
+    """``details.reason`` (see ``CursorExpiredReason``), or None when the API sent none."""
 
     def __init__(
         self,
