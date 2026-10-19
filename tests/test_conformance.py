@@ -21,6 +21,7 @@ import pytest
 
 import desktopaccountingapi as daapi
 from conftest import load_fixture
+from desktopaccountingapi import _base_client
 from desktopaccountingapi import types as daapi_types
 from desktopaccountingapi._wire import WireModel
 from desktopaccountingapi.webhooks import verify, verify_signature
@@ -203,6 +204,7 @@ class Observed:
         self.handle: Any = None
         self.response: Optional[daapi.RawResponse[Any]] = None
         self.error: Optional[BaseException] = None
+        self.retry_delays: list[float] = []
 
 
 def run_sync(scenario: Mapping[str, Any], url: str) -> Observed:
@@ -415,6 +417,12 @@ def check_outcome(scenario: Mapping[str, Any], seen: Observed) -> None:
             assert response.request_id == exp["requestId"]
         for name, value in (exp.get("headers") or {}).items():
             assert response.headers.get(name) == value, f"header {name}"
+    if "retryDelaysMs" in outcome:
+        # Never sooner than expected (Retry-After is a minimum) and no more than 50 ms later.
+        delays = [d * 1000 for d in seen.retry_delays]
+        assert len(delays) == len(outcome["retryDelaysMs"]), f"retry delays {delays}"
+        for i, (actual, expected) in enumerate(zip(delays, outcome["retryDelaysMs"])):
+            assert expected <= actual <= expected + 50, f"retry delay {i}: {actual} ms, expected {expected} ms"
     if expected_error is not None:
         error = seen.error
         assert error is not None, "expected an error, the call succeeded"
@@ -457,11 +465,23 @@ SCENARIO_IDS = [s["name"] for s in SCENARIOS["scenarios"]]
 
 @pytest.mark.parametrize("mode", ["sync", "async"])
 @pytest.mark.parametrize("scenario", SCENARIOS["scenarios"], ids=SCENARIO_IDS)
-def test_scenario(scenario: Mapping[str, Any], mode: str, mock_server_url: str) -> None:
+def test_scenario(
+    scenario: Mapping[str, Any], mode: str, mock_server_url: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     if "python" not in scenario.get("only", ["python"]):
         pytest.skip("scenario for other SDKs")
+    # Scenarios with retryDelaysMs record each wait before a retry instead of sleeping.
+    waits: list[float] = []
+    if "retryDelaysMs" in scenario["outcome"]:
+
+        async def async_sleep(seconds: float) -> None:
+            waits.append(seconds)
+
+        monkeypatch.setattr(_base_client, "_sleep", waits.append)
+        monkeypatch.setattr(_base_client, "_async_sleep", async_sleep)
     _control(mock_server_url, "reset", scenario["name"])
     seen = (run_sync if mode == "sync" else run_async)(scenario, mock_server_url)
+    seen.retry_delays = waits
     check_outcome(scenario, seen)
     verdict = _control(mock_server_url, "verify", scenario["name"])
     assert verdict["ok"], f"mock server: {verdict['errors']}"

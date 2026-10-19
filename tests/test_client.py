@@ -13,7 +13,7 @@ import httpx
 import pytest
 
 import desktopaccountingapi as daapi
-from desktopaccountingapi import AsyncDesktopAccountingApi, DesktopAccountingApi
+from desktopaccountingapi import AsyncDesktopAccountingApi, DesktopAccountingApi, _base_client
 from desktopaccountingapi._base_client import backoff_delay, should_retry
 from desktopaccountingapi._errors import error_from_response
 from desktopaccountingapi.types import Invoice, InvoiceLineCreateInput
@@ -254,6 +254,10 @@ def test_backoff_and_retry_after() -> None:
     assert backoff_delay(0, httpx.Headers({"Retry-After": "0"})) == 0.0
     assert backoff_delay(0, httpx.Headers({"Retry-After": "3"})) == 3.0
     assert backoff_delay(0, httpx.Headers({"Retry-After": "Wed, 21 Oct 2015 07:28:00 GMT"})) == 0.0
+    assert backoff_delay(0, httpx.Headers({"Retry-After": "120"})) == 120.0, "never shortened to 60 s"
+    assert backoff_delay(0, httpx.Headers({"Retry-After": "3600"})) == 3600.0
+    assert backoff_delay(0, httpx.Headers({"Retry-After": "Fri, 31 Dec 2100 23:59:59 GMT"})) > 86400.0
+    assert backoff_delay(0, httpx.Headers({"Retry-After": "inf"})) <= 0.5, "a non-finite value falls back to backoff"
     for attempt, cap in [(0, 0.5), (1, 1.0), (2, 2.0), (3, 4.0), (4, 8.0), (10, 8.0)]:
         delay = backoff_delay(attempt)
         assert 0.75 * cap <= delay <= cap
@@ -633,6 +637,66 @@ def test_total_timeout_caps_attempts_and_retries() -> None:
     with pytest.raises(daapi.APIConnectionError):
         client_for(rec, total_timeout=0.01, max_retries=5).qbd.invoices.retrieve("7-1")
     assert len(rec.requests) == 1
+
+
+def _rate_limited(retry_after: str) -> httpx.Response:
+    return httpx.Response(
+        429, headers={"Retry-After": retry_after}, json=error_json("RATE_LIMIT_ERROR", "RATE_LIMITED", 429)
+    )
+
+
+@pytest.fixture
+def recorded_sleeps(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    waits: list[float] = []
+
+    async def async_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    monkeypatch.setattr(_base_client, "_sleep", waits.append)
+    monkeypatch.setattr(_base_client, "_async_sleep", async_sleep)
+    return waits
+
+
+def test_long_retry_after_is_waited_in_full(recorded_sleeps: list[float]) -> None:
+    rec = Recorder([_rate_limited("120"), httpx.Response(200, json=invoice_json())])
+    client_for(rec, total_timeout=180).qbd.invoices.retrieve("7-1")
+    assert len(rec.requests) == 2
+    assert recorded_sleeps == [120.0]
+    rec = Recorder([_rate_limited("120"), httpx.Response(200, json=invoice_json())])
+    client_for(rec).qbd.invoices.retrieve("7-1")
+    assert recorded_sleeps == [120.0, 120.0], "without a total timeout the full delay is waited"
+
+
+def test_long_retry_after_beyond_total_timeout_raises_without_retry(recorded_sleeps: list[float]) -> None:
+    rec = Recorder([_rate_limited("120"), httpx.Response(200, json=invoice_json())])
+    with pytest.raises(daapi.RateLimitError):
+        client_for(rec, total_timeout=60).qbd.invoices.retrieve("7-1")
+    assert len(rec.requests) == 1, "never retried sooner than Retry-After"
+    assert recorded_sleeps == []
+
+
+def test_long_retry_after_write_keeps_idempotency_key(recorded_sleeps: list[float]) -> None:
+    rec = Recorder([_rate_limited("120"), httpx.Response(201, json=invoice_json())])
+    client_for(rec, total_timeout=180).qbd.invoices.create(customer_id="80000001-1")
+    assert recorded_sleeps == [120.0]
+    keys = [r.headers["idempotency-key"] for r in rec.requests]
+    assert len(keys) == 2 and keys[0] == keys[1]
+
+
+def test_long_retry_after_async(recorded_sleeps: list[float]) -> None:
+    async def run() -> None:
+        rec = Recorder([_rate_limited("120"), httpx.Response(200, json=invoice_json())])
+        async with async_client_for(rec, total_timeout=180) as client:
+            await client.qbd.invoices.retrieve("7-1")
+        assert len(rec.requests) == 2
+        rec = Recorder([_rate_limited("120"), httpx.Response(200, json=invoice_json())])
+        async with async_client_for(rec, total_timeout=60) as client:
+            with pytest.raises(daapi.RateLimitError):
+                await client.qbd.invoices.retrieve("7-1")
+        assert len(rec.requests) == 1
+
+    asyncio.run(run())
+    assert recorded_sleeps == [120.0]
 
 
 def test_daapi_log_env(monkeypatch: pytest.MonkeyPatch) -> None:
