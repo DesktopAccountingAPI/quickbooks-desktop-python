@@ -52,7 +52,6 @@ DEFAULT_MAX_RETRIES = 2
 MAX_POLL_WAIT_SECONDS = 60
 _MAX_BACKOFF = 8.0
 _INITIAL_BACKOFF = 0.5
-_MAX_RETRY_AFTER = 60.0
 
 _logger = logging.getLogger("desktopaccountingapi")
 
@@ -154,13 +153,16 @@ def _parse_retry_after(headers: httpx.Headers) -> Optional[float]:
         if when is None:
             return None
         seconds = when.timestamp() - time.time()
-    if math.isnan(seconds):
+    if not math.isfinite(seconds):
         return None
-    return min(max(seconds, 0.0), _MAX_RETRY_AFTER)
+    # Never shortened: the caller waits the full delay or, when the total timeout would end first,
+    # raises the error without retrying.
+    return max(seconds, 0.0)
 
 
 def backoff_delay(attempt: int, headers: Optional[httpx.Headers] = None) -> float:
-    """Delay before retry number ``attempt + 1``: ``Retry-After`` if present, else 0.5 s * 2^attempt (max 8 s) with jitter."""
+    """Delay before retry number ``attempt + 1``: ``Retry-After`` if present (whatever its length),
+    else 0.5 s * 2^attempt (max 8 s) with jitter."""
     if headers is not None:
         retry_after = _parse_retry_after(headers)
         if retry_after is not None:
@@ -195,6 +197,16 @@ def _attempt_timeout(prep: _Prepared) -> float:
     if remaining <= 0:
         raise APITimeoutError(f"{prep.operation_id}: the call's total timeout ended before a response arrived.")
     return min(prep.attempt_timeout, remaining)
+
+
+def _sleep(seconds: float) -> None:
+    """The wait between sync retries (a test seam: the conformance suite records it instead)."""
+    time.sleep(seconds)
+
+
+async def _async_sleep(seconds: float) -> None:
+    """The wait between async retries (a test seam: the conformance suite records it instead)."""
+    await asyncio.sleep(seconds)
 
 
 def _retry_fits(prep: _Prepared, delay: float) -> bool:
@@ -749,7 +761,7 @@ class SyncAPIClient(_BaseClient):
                 delay = backoff_delay(attempt)
                 if attempt < prep.max_retries and _retryable_transport_error(exc) and _retry_fits(prep, delay):
                     self._log_retry(prep, exc.__class__.__name__, delay, attempt)
-                    time.sleep(delay)
+                    _sleep(delay)
                     attempt += 1
                     continue
                 raise _connection_error(exc) from exc
@@ -766,7 +778,7 @@ class SyncAPIClient(_BaseClient):
                 delay = backoff_delay(attempt, response.headers)
                 if _retry_fits(prep, delay):
                     self._log_retry(prep, f"HTTP {response.status_code}", delay, attempt)
-                    time.sleep(delay)
+                    _sleep(delay)
                     attempt += 1
                     continue
             raise error
@@ -974,7 +986,7 @@ class AsyncAPIClient(_BaseClient):
                 delay = backoff_delay(attempt)
                 if attempt < prep.max_retries and _retryable_transport_error(exc) and _retry_fits(prep, delay):
                     self._log_retry(prep, exc.__class__.__name__, delay, attempt)
-                    await asyncio.sleep(delay)
+                    await _async_sleep(delay)
                     attempt += 1
                     continue
                 raise _connection_error(exc) from exc
@@ -991,7 +1003,7 @@ class AsyncAPIClient(_BaseClient):
                 delay = backoff_delay(attempt, response.headers)
                 if _retry_fits(prep, delay):
                     self._log_retry(prep, f"HTTP {response.status_code}", delay, attempt)
-                    await asyncio.sleep(delay)
+                    await _async_sleep(delay)
                     attempt += 1
                     continue
             raise error

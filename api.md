@@ -2,7 +2,7 @@
 
 # API reference
 
-Every method of `DesktopAccountingApi`, generated from the API contract (438 operations, contract `sha256:149fc7b0599d`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
+Every method of `DesktopAccountingApi`, generated from the API contract (439 operations, contract `sha256:e5fba4897290`). `AsyncDesktopAccountingApi` has the same methods as coroutines. Models are in `desktopaccountingapi.types`.
 
 Every method also accepts the keyword arguments `timeout`, `total_timeout` and `max_retries`; QuickBooks Desktop operations accept `end_user_id` (or Conductor's `conductor_end_user_id`) and `server_timeout`, and writes accept `idempotency_key`. Non-paginated methods are available under `with_raw_response`, and async-capable ones under `enqueue` (returning a `RequestHandle`).
 
@@ -33,6 +33,7 @@ Every method also accepts the keyword arguments `timeout`, `total_timeout` and `
 - `client.end_users.list(**params) -> CursorPager[EndUser]`: `GET /v1/end-users`. List end users.
 - `client.end_users.passthrough(id, body) -> dict[str, Any]`: `POST /v1/end-users/{id}/passthrough/{integrationSlug}`. Send a raw qbXML request.
 - `client.end_users.passthrough_xml(id, xml) -> str`: `POST /v1/end-users/{id}/passthrough/{integrationSlug}` with `application/xml`. Raw qbXML variant.
+- `client.end_users.remove_connection_install(id, install_id) -> EndUserConnection`: `POST /v1/end-users/{id}/connection/installs/{installId}/remove`. Remove a Web Connector install.
 - `client.end_users.reset_company_file(id, mode=..., confirm=...) -> EndUser`: `POST /v1/end-users/{id}/reset-company-file`. Reset the company file.
 - `client.end_users.retrieve(id) -> EndUser`: `GET /v1/end-users/{id}`. Retrieve an end user.
 - `client.end_users.retrieve_connection(id) -> EndUserConnection`: `GET /v1/end-users/{id}/connection`. Retrieve the connection.
