@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.9.1 (2026-10-21)
+
+- New error `QBD_MERGE_NOT_ALLOWED` (422, not retryable, outcome `not_applied`) on merges (`qbd.<list>.merge` and merges sent through passthrough or a batch) when QuickBooks Desktop refuses the merge with status 3500 outside the multi-user case. It used to surface as `QBD_REQUEST_ERROR` with QuickBooks' "Unknown Error". `details` carries `qbxmlStatusCode`, `qbxmlStatusMessage`, `requestElement`, `listMergeType`, `sourceId`, `targetId`, `fileMode`, `fileModeObservedAt` and `requestId`; nothing was changed. Do not retry automatically. Customer merges add the diagnosis cause `customer_merge_native_refusal`, which confirms the refusal without claiming a cause; QuickBooks does not report one.
+- The passthrough endpoint documents `QBD_MERGE_NOT_ALLOWED` and `QBD_REQUIRES_SINGLE_USER_MODE` for raw `ListMergeRq` requests.
+
 ## 0.9.0 (2026-10-19)
 
 - `Retry-After` is waited out in full, including values above 60 s. It was cut to 60 s, so the retry came sooner than the server asked. When the wait would end after `total_timeout`, the SDK raises the error without retrying.
