@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.10.0 (2026-10-27)
+
+- The request resource (`recovered_object_id` (wire name `recoveredObjectId`)) names the object a write created or changed when the platform recovered that write after a lost acknowledgement. QuickBooks' response body to such a write was never received, so a request retrieved with `requests.retrieve` that shows `succeeded`, `applied` and `recovered: true` keeps `result` null: retrieve the object by this id. It is null for every other request. A typed batch recovered that way still carries each create member's own `recoveredObjectId` in `result`; the request-level field holds the first write member's.
+- A list you keep reading keeps its QuickBooks session open for up to 10 minutes. The 2-minute session cap ended longer list reads with `410 CURSOR_EXPIRED` (`session_ended`), with no way to resume. The 10-second idle window between pages is unchanged. See the Pagination guide.
+
 ## 0.9.1 (2026-10-21)
 
 - New error `QBD_MERGE_NOT_ALLOWED` (422, not retryable, outcome `not_applied`) on merges (`qbd.<list>.merge` and merges sent through passthrough or a batch) when QuickBooks Desktop refuses the merge with status 3500 outside the multi-user case. It used to surface as `QBD_REQUEST_ERROR` with QuickBooks' "Unknown Error". `details` carries `qbxmlStatusCode`, `qbxmlStatusMessage`, `requestElement`, `listMergeType`, `sourceId`, `targetId`, `fileMode`, `fileModeObservedAt` and `requestId`; nothing was changed. Do not retry automatically. Customer merges add the diagnosis cause `customer_merge_native_refusal`, which confirms the refusal without claiming a cause; QuickBooks does not report one.
