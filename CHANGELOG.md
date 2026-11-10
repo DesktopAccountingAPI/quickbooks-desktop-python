@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.11.0 (2026-11-10)
+
+- A write whose outcome was unknown and that the platform later recovered (request `succeeded`, `outcome` `applied`, `recovered: true`, `result` null, `recovered_object_id` set) raises the new `ResultUnavailableError` from `RequestHandle.wait()`, `RequestHandle.result()` (and their async versions) and the long poll after `504 QBD_REQUEST_TIMEOUT`. They raised `AttributeError` while parsing the missing result. The error is an `InternalError` with `request_id`, `outcome` `applied`, `retryable` False and `recovered_object_id`; retrieve the object by that ID and do not send the write again. This holds also when the result is past retention (`resultExpired` true).
+- `500 INTERNAL_ERROR` with `details["reason"]` `result_unavailable` (the result is no longer available) raises `ResultUnavailableError` (`recovered_object_id` None) and is never retried, even when `Daapi-Should-Retry` says true. For a write that was applied (`outcome: applied`), never send it again and read the object instead; for a read (`outcome: not_applicable`), it is safe to send the read again.
+- `client.qbd.price_levels.list()` accepts `item_id`, an alias of `item_ids` with Conductor's name for this filter, so Conductor code ports unchanged. Both take one item ID; sending both with different values returns `400 INVALID_PARAMETER`. Batch members (`BatchPriceLevelListInputQuery.item_id`) accept it too.
+
 ## 0.10.0 (2026-10-27)
 
 - The request resource (`recovered_object_id` (wire name `recoveredObjectId`)) names the object a write created or changed when the platform recovered that write after a lost acknowledgement. QuickBooks' response body to such a write was never received, so a request retrieved with `requests.retrieve` that shows `succeeded`, `applied` and `recovered: true` keeps `result` null: retrieve the object by this id. It is null for every other request. A typed batch recovered that way still carries each create member's own `recoveredObjectId` in `result`; the request-level field holds the first write member's.

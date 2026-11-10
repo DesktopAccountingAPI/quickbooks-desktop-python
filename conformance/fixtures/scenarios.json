@@ -1438,6 +1438,663 @@
       }
     },
     {
+      "name": "list_first_page_timeout_long_polls_request",
+      "description": "The first page of a list gets 504 QBD_REQUEST_TIMEOUT (outcome not_applicable). The SDK never resends it, long-polls GET /v1/requests/{details.requestId}?waitSeconds=... and returns the page from the request's result.",
+      "client": {
+        "timeoutMs": 20000
+      },
+      "call": {
+        "op": "qbd.invoices.list",
+        "kind": "firstPage",
+        "params": {
+          "limit": 2
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "query": {
+              "limit": [
+                "2"
+              ]
+            },
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 504,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00c",
+              "Daapi-Should-Retry": "false"
+            },
+            "body": {
+              "error": {
+                "type": "INTEGRATION_CONNECTION_ERROR",
+                "code": "QBD_REQUEST_TIMEOUT",
+                "message": "Conformance error QBD_REQUEST_TIMEOUT.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 504,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w00c",
+                "cause": "Why QBD_REQUEST_TIMEOUT happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#qbd_request_timeout",
+                "retryable": false,
+                "outcome": "not_applicable",
+                "param": null,
+                "details": {
+                  "requestId": "req_01j9x4m6v4c8k2t7q0r5s3wpg1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3wpg1",
+            "query": {
+              "waitSeconds": {
+                "$regex": "^[0-9]+$"
+              }
+            },
+            "headers": {
+              "idempotency-key": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00d"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3wpg1",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.list",
+              "method": "GET",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "sync",
+              "status": "sent",
+              "outcome": "not_applicable",
+              "sentAt": "2026-10-05T16:04:00.000Z",
+              "completedAt": null,
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": null,
+              "queuePosition": null,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": false,
+              "recoveredObjectId": null,
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": null,
+              "resultExpired": false
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3wpg1",
+            "query": {
+              "waitSeconds": {
+                "$regex": "^[0-9]+$"
+              }
+            },
+            "headers": {
+              "idempotency-key": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00e"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3wpg1",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.list",
+              "method": "GET",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "sync",
+              "status": "succeeded",
+              "outcome": "not_applicable",
+              "sentAt": null,
+              "completedAt": "2026-10-05T16:04:01.000Z",
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": null,
+              "queuePosition": null,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": false,
+              "recoveredObjectId": null,
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": {
+                "objectType": "list",
+                "url": "/v1/quickbooks-desktop/invoices",
+                "data": [
+                  {
+                    "id": "1-1700000000",
+                    "objectType": "qbd_invoice",
+                    "createdAt": "2026-10-05T09:14:03-07:00",
+                    "updatedAt": "2026-10-05T09:11:03-07:00",
+                    "revisionNumber": "1700000001",
+                    "transactionNumber": null,
+                    "customer": null,
+                    "class": null,
+                    "receivablesAccount": null,
+                    "documentTemplate": null,
+                    "transactionDate": null,
+                    "refNumber": "INV-1001",
+                    "billingAddress": null,
+                    "shippingAddress": null,
+                    "isPending": null,
+                    "isFinanceCharge": null,
+                    "purchaseOrderNumber": null,
+                    "terms": null,
+                    "dueDate": null,
+                    "salesRepresentative": null,
+                    "shipmentOrigin": null,
+                    "shippingDate": null,
+                    "shippingMethod": null,
+                    "subtotal": "105.50",
+                    "salesTaxItem": null,
+                    "salesTaxPercentage": null,
+                    "salesTaxTotal": null,
+                    "appliedAmount": null,
+                    "balanceRemaining": null,
+                    "currency": null,
+                    "exchangeRate": null,
+                    "balanceRemainingInHomeCurrency": null,
+                    "memo": null,
+                    "isPaid": null,
+                    "customerMessage": null,
+                    "isQueuedForPrint": null,
+                    "isQueuedForEmail": null,
+                    "salesTaxCode": null,
+                    "suggestedDiscountAmount": null,
+                    "suggestedDiscountDate": null,
+                    "otherCustomField": null,
+                    "externalId": null,
+                    "linkedTransactions": [],
+                    "lines": [],
+                    "lineGroups": [],
+                    "customFields": []
+                  },
+                  {
+                    "id": "2-1700000000",
+                    "objectType": "qbd_invoice",
+                    "createdAt": "2026-10-05T09:14:03-07:00",
+                    "updatedAt": "2026-10-05T09:12:03-07:00",
+                    "revisionNumber": "1700000002",
+                    "transactionNumber": null,
+                    "customer": null,
+                    "class": null,
+                    "receivablesAccount": null,
+                    "documentTemplate": null,
+                    "transactionDate": null,
+                    "refNumber": "INV-1002",
+                    "billingAddress": null,
+                    "shippingAddress": null,
+                    "isPending": null,
+                    "isFinanceCharge": null,
+                    "purchaseOrderNumber": null,
+                    "terms": null,
+                    "dueDate": null,
+                    "salesRepresentative": null,
+                    "shipmentOrigin": null,
+                    "shippingDate": null,
+                    "shippingMethod": null,
+                    "subtotal": "105.50",
+                    "salesTaxItem": null,
+                    "salesTaxPercentage": null,
+                    "salesTaxTotal": null,
+                    "appliedAmount": null,
+                    "balanceRemaining": null,
+                    "currency": null,
+                    "exchangeRate": null,
+                    "balanceRemainingInHomeCurrency": null,
+                    "memo": null,
+                    "isPaid": null,
+                    "customerMessage": null,
+                    "isQueuedForPrint": null,
+                    "isQueuedForEmail": null,
+                    "salesTaxCode": null,
+                    "suggestedDiscountAmount": null,
+                    "suggestedDiscountDate": null,
+                    "otherCustomField": null,
+                    "externalId": null,
+                    "linkedTransactions": [],
+                    "lines": [],
+                    "lineGroups": [],
+                    "customFields": []
+                  }
+                ],
+                "nextCursor": "c1.page2",
+                "hasMore": true,
+                "remainingCount": 3,
+                "cursorExpiresAt": "2026-10-05T16:04:11.120Z"
+              },
+              "resultExpired": false
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "page": {
+          "ids": [
+            "1-1700000000",
+            "2-1700000000"
+          ],
+          "nextCursor": "c1.page2",
+          "hasMore": true,
+          "remainingCount": 3
+        }
+      }
+    },
+    {
+      "name": "list_continuation_timeout_long_polls_request",
+      "description": "A continue request (page 2) gets 504 QBD_REQUEST_TIMEOUT. The iterator never resends the cursor, long-polls the request and goes on with the page from its result, so no item is skipped or duplicated.",
+      "client": {
+        "timeoutMs": 20000
+      },
+      "call": {
+        "op": "qbd.invoices.list",
+        "kind": "iterate",
+        "params": {
+          "limit": 2
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "query": {
+              "limit": [
+                "2"
+              ]
+            },
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00f"
+            },
+            "body": {
+              "objectType": "list",
+              "url": "/v1/quickbooks-desktop/invoices",
+              "data": [
+                {
+                  "id": "1-1700000000",
+                  "objectType": "qbd_invoice",
+                  "createdAt": "2026-10-05T09:14:03-07:00",
+                  "updatedAt": "2026-10-05T09:11:03-07:00",
+                  "revisionNumber": "1700000001",
+                  "transactionNumber": null,
+                  "customer": null,
+                  "class": null,
+                  "receivablesAccount": null,
+                  "documentTemplate": null,
+                  "transactionDate": null,
+                  "refNumber": "INV-1001",
+                  "billingAddress": null,
+                  "shippingAddress": null,
+                  "isPending": null,
+                  "isFinanceCharge": null,
+                  "purchaseOrderNumber": null,
+                  "terms": null,
+                  "dueDate": null,
+                  "salesRepresentative": null,
+                  "shipmentOrigin": null,
+                  "shippingDate": null,
+                  "shippingMethod": null,
+                  "subtotal": "105.50",
+                  "salesTaxItem": null,
+                  "salesTaxPercentage": null,
+                  "salesTaxTotal": null,
+                  "appliedAmount": null,
+                  "balanceRemaining": null,
+                  "currency": null,
+                  "exchangeRate": null,
+                  "balanceRemainingInHomeCurrency": null,
+                  "memo": null,
+                  "isPaid": null,
+                  "customerMessage": null,
+                  "isQueuedForPrint": null,
+                  "isQueuedForEmail": null,
+                  "salesTaxCode": null,
+                  "suggestedDiscountAmount": null,
+                  "suggestedDiscountDate": null,
+                  "otherCustomField": null,
+                  "externalId": null,
+                  "linkedTransactions": [],
+                  "lines": [],
+                  "lineGroups": [],
+                  "customFields": []
+                },
+                {
+                  "id": "2-1700000000",
+                  "objectType": "qbd_invoice",
+                  "createdAt": "2026-10-05T09:14:03-07:00",
+                  "updatedAt": "2026-10-05T09:12:03-07:00",
+                  "revisionNumber": "1700000002",
+                  "transactionNumber": null,
+                  "customer": null,
+                  "class": null,
+                  "receivablesAccount": null,
+                  "documentTemplate": null,
+                  "transactionDate": null,
+                  "refNumber": "INV-1002",
+                  "billingAddress": null,
+                  "shippingAddress": null,
+                  "isPending": null,
+                  "isFinanceCharge": null,
+                  "purchaseOrderNumber": null,
+                  "terms": null,
+                  "dueDate": null,
+                  "salesRepresentative": null,
+                  "shipmentOrigin": null,
+                  "shippingDate": null,
+                  "shippingMethod": null,
+                  "subtotal": "105.50",
+                  "salesTaxItem": null,
+                  "salesTaxPercentage": null,
+                  "salesTaxTotal": null,
+                  "appliedAmount": null,
+                  "balanceRemaining": null,
+                  "currency": null,
+                  "exchangeRate": null,
+                  "balanceRemainingInHomeCurrency": null,
+                  "memo": null,
+                  "isPaid": null,
+                  "customerMessage": null,
+                  "isQueuedForPrint": null,
+                  "isQueuedForEmail": null,
+                  "salesTaxCode": null,
+                  "suggestedDiscountAmount": null,
+                  "suggestedDiscountDate": null,
+                  "otherCustomField": null,
+                  "externalId": null,
+                  "linkedTransactions": [],
+                  "lines": [],
+                  "lineGroups": [],
+                  "customFields": []
+                }
+              ],
+              "nextCursor": "c1.page2",
+              "hasMore": true,
+              "remainingCount": 1,
+              "cursorExpiresAt": "2026-10-05T16:04:11.120Z"
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "query": {
+              "cursor": [
+                "c1.page2"
+              ],
+              "limit": [
+                "2"
+              ]
+            },
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 504,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00g",
+              "Daapi-Should-Retry": "false"
+            },
+            "body": {
+              "error": {
+                "type": "INTEGRATION_CONNECTION_ERROR",
+                "code": "QBD_REQUEST_TIMEOUT",
+                "message": "Conformance error QBD_REQUEST_TIMEOUT.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 504,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w00g",
+                "cause": "Why QBD_REQUEST_TIMEOUT happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#qbd_request_timeout",
+                "retryable": false,
+                "outcome": "not_applicable",
+                "param": null,
+                "details": {
+                  "requestId": "req_01j9x4m6v4c8k2t7q0r5s3wpg2"
+                }
+              }
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3wpg2",
+            "query": {
+              "waitSeconds": {
+                "$regex": "^[0-9]+$"
+              }
+            },
+            "headers": {
+              "idempotency-key": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00h"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3wpg2",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.list",
+              "method": "GET",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "sync",
+              "status": "succeeded",
+              "outcome": "not_applicable",
+              "sentAt": null,
+              "completedAt": "2026-10-05T16:04:01.000Z",
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": null,
+              "queuePosition": null,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": false,
+              "recoveredObjectId": null,
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": {
+                "objectType": "list",
+                "url": "/v1/quickbooks-desktop/invoices",
+                "data": [
+                  {
+                    "id": "3-1700000000",
+                    "objectType": "qbd_invoice",
+                    "createdAt": "2026-10-05T09:14:03-07:00",
+                    "updatedAt": "2026-10-05T09:13:03-07:00",
+                    "revisionNumber": "1700000003",
+                    "transactionNumber": null,
+                    "customer": null,
+                    "class": null,
+                    "receivablesAccount": null,
+                    "documentTemplate": null,
+                    "transactionDate": null,
+                    "refNumber": "INV-1003",
+                    "billingAddress": null,
+                    "shippingAddress": null,
+                    "isPending": null,
+                    "isFinanceCharge": null,
+                    "purchaseOrderNumber": null,
+                    "terms": null,
+                    "dueDate": null,
+                    "salesRepresentative": null,
+                    "shipmentOrigin": null,
+                    "shippingDate": null,
+                    "shippingMethod": null,
+                    "subtotal": "105.50",
+                    "salesTaxItem": null,
+                    "salesTaxPercentage": null,
+                    "salesTaxTotal": null,
+                    "appliedAmount": null,
+                    "balanceRemaining": null,
+                    "currency": null,
+                    "exchangeRate": null,
+                    "balanceRemainingInHomeCurrency": null,
+                    "memo": null,
+                    "isPaid": null,
+                    "customerMessage": null,
+                    "isQueuedForPrint": null,
+                    "isQueuedForEmail": null,
+                    "salesTaxCode": null,
+                    "suggestedDiscountAmount": null,
+                    "suggestedDiscountDate": null,
+                    "otherCustomField": null,
+                    "externalId": null,
+                    "linkedTransactions": [],
+                    "lines": [],
+                    "lineGroups": [],
+                    "customFields": []
+                  }
+                ],
+                "nextCursor": null,
+                "hasMore": false,
+                "remainingCount": null,
+                "cursorExpiresAt": null
+              },
+              "resultExpired": false
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "items": [
+          "1-1700000000",
+          "2-1700000000",
+          "3-1700000000"
+        ]
+      }
+    },
+    {
       "name": "platform_list_pagination_without_end_user",
       "description": "endUsers.list paginates with platform keyset cursors and never sends Daapi-End-User-Id, even when the client has a default end user.",
       "client": {
@@ -1474,7 +2131,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00c"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00z"
             },
             "body": {
               "objectType": "list",
@@ -1532,7 +2189,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00d"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00j"
             },
             "body": {
               "objectType": "list",
@@ -1594,7 +2251,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00e"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00k"
             },
             "body": {
               "id": "80000005-1700000000",
@@ -1658,7 +2315,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00f"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00z"
             },
             "body": {
               "id": "80000008-1700000000",
@@ -1744,7 +2401,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00g"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00m"
             },
             "body": {
               "id": "80000007-1700000000",
@@ -1810,7 +2467,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00h"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00n"
             },
             "body": {
               "id": "80000009-1700000000",
@@ -1969,7 +2626,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00j"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00p"
             },
             "body": {
               "objectType": "list",
@@ -2093,7 +2750,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00z"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00r"
             },
             "body": {
               "objectType": "qbd_batch",
@@ -2178,7 +2835,7 @@
                     "userFacingMessage": "Something went wrong. Please try again.",
                     "httpStatusCode": 404,
                     "integrationCode": "500",
-                    "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w00k",
+                    "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w00q",
                     "cause": "Why QBD_OBJECT_NOT_FOUND happens.",
                     "fixes": [
                       {
@@ -2332,7 +2989,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00m"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00s"
             },
             "body": {
               "objectType": "qbd_batch",
@@ -2426,7 +3083,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00n",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00t",
               "Daapi-Idempotent-Replayed": "true"
             },
             "body": {
@@ -2631,7 +3288,7 @@
             "status": 503,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00p",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00v",
               "Daapi-Should-Retry": "true",
               "Retry-After": "0"
             },
@@ -2643,7 +3300,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 503,
                 "integrationCode": "0x80040414",
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w00p",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w00v",
                 "cause": "Why QBD_MODAL_DIALOG_OPEN happens.",
                 "fixes": [
                   {
@@ -2695,7 +3352,7 @@
             "status": 201,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00q"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w010"
             },
             "body": {
               "id": "7-1700000000",
@@ -2840,7 +3497,7 @@
             "status": 201,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00r",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w011",
               "Daapi-Idempotent-Replayed": "true"
             },
             "body": {
@@ -2955,7 +3612,7 @@
             "status": 201,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00s"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w012"
             },
             "body": {
               "id": "7-1700000000",
@@ -3050,7 +3707,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00t"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w013"
             },
             "body": {
               "id": "80000001-1700000000",
@@ -3130,7 +3787,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00z"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w014"
             },
             "body": {
               "id": "80000001-1700000000",
@@ -3228,477 +3885,9 @@
             "status": 429,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w00v",
-              "Daapi-Should-Retry": "true",
-              "Retry-After": "0"
-            },
-            "body": {
-              "error": {
-                "type": "RATE_LIMIT_ERROR",
-                "code": "RATE_LIMITED",
-                "message": "Conformance error RATE_LIMITED.",
-                "userFacingMessage": "Something went wrong. Please try again.",
-                "httpStatusCode": 429,
-                "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w00v",
-                "cause": "Why RATE_LIMITED happens.",
-                "fixes": [
-                  {
-                    "actor": "end_user",
-                    "action": "Close the open dialog in QuickBooks Desktop."
-                  },
-                  {
-                    "actor": "developer",
-                    "action": "Retry after the end user confirms."
-                  }
-                ],
-                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#rate_limited",
-                "retryable": true,
-                "outcome": "not_applied",
-                "param": null,
-                "details": {}
-              }
-            }
-          }
-        },
-        {
-          "expect": {
-            "method": "GET",
-            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
-            "headers": {
-              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
-              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
-              "idempotency-key": {
-                "$absent": true
-              },
-              "prefer": {
-                "$absent": true
-              }
-            }
-          },
-          "respond": {
-            "status": 200,
-            "headers": {
-              "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w010"
-            },
-            "body": {
-              "id": "80000001-1700000000",
-              "objectType": "qbd_customer",
-              "createdAt": "2026-10-05T09:14:03-07:00",
-              "updatedAt": "2026-10-05T09:14:03-07:00",
-              "revisionNumber": "sample",
-              "name": "Acme Supply",
-              "fullName": "Acme Supply",
-              "isActive": null,
-              "class": null,
-              "parent": null,
-              "sublevel": null,
-              "companyName": null,
-              "salutation": null,
-              "firstName": null,
-              "middleName": null,
-              "lastName": null,
-              "jobTitle": null,
-              "billingAddress": null,
-              "shippingAddress": null,
-              "alternateShippingAddresses": null,
-              "phone": null,
-              "alternatePhone": null,
-              "fax": null,
-              "email": null,
-              "ccEmail": null,
-              "contact": null,
-              "alternateContact": null,
-              "customContactFields": [],
-              "additionalContacts": [],
-              "customerType": null,
-              "terms": null,
-              "salesRepresentative": null,
-              "balance": "1234.50",
-              "totalBalance": null,
-              "salesTaxCode": null,
-              "salesTaxItem": null,
-              "resaleNumber": null,
-              "accountNumber": null,
-              "creditLimit": null,
-              "preferredPaymentMethod": null,
-              "creditCard": null,
-              "jobStatus": null,
-              "jobStartDate": null,
-              "jobProjectedEndDate": null,
-              "jobEndDate": null,
-              "jobDescription": null,
-              "jobType": null,
-              "note": null,
-              "additionalNotes": [],
-              "preferredDeliveryMethod": null,
-              "priceLevel": null,
-              "externalId": null,
-              "currency": null,
-              "customFields": []
-            }
-          }
-        }
-      ],
-      "outcome": {
-        "result": {
-          "id": "80000001-1700000000",
-          "balance": "1234.50",
-          "name": "Acme Supply"
-        }
-      }
-    },
-    {
-      "name": "retry_after_120_s_within_total_timeout_is_waited",
-      "description": "Retry-After: 120 with a total timeout that leaves room for it: the SDK waits the full 120 s (not a 60 s cap, not its own shorter backoff) and then retries.",
-      "only": [
-        "node",
-        "python",
-        "dotnet"
-      ],
-      "client": {
-        "totalTimeoutMs": 300000
-      },
-      "call": {
-        "op": "qbd.customers.retrieve",
-        "kind": "call",
-        "path": {
-          "id": "80000001-1700000000"
-        }
-      },
-      "exchanges": [
-        {
-          "expect": {
-            "method": "GET",
-            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
-            "headers": {
-              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
-              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
-              "idempotency-key": {
-                "$absent": true
-              },
-              "prefer": {
-                "$absent": true
-              }
-            }
-          },
-          "respond": {
-            "status": 429,
-            "headers": {
-              "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w011",
-              "Daapi-Should-Retry": "true",
-              "Retry-After": "120"
-            },
-            "body": {
-              "error": {
-                "type": "RATE_LIMIT_ERROR",
-                "code": "RATE_LIMITED",
-                "message": "Conformance error RATE_LIMITED.",
-                "userFacingMessage": "Something went wrong. Please try again.",
-                "httpStatusCode": 429,
-                "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w011",
-                "cause": "Why RATE_LIMITED happens.",
-                "fixes": [
-                  {
-                    "actor": "end_user",
-                    "action": "Close the open dialog in QuickBooks Desktop."
-                  },
-                  {
-                    "actor": "developer",
-                    "action": "Retry after the end user confirms."
-                  }
-                ],
-                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#rate_limited",
-                "retryable": true,
-                "outcome": "not_applied",
-                "param": null,
-                "details": {}
-              }
-            }
-          }
-        },
-        {
-          "expect": {
-            "method": "GET",
-            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
-            "headers": {
-              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
-              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
-              "idempotency-key": {
-                "$absent": true
-              },
-              "prefer": {
-                "$absent": true
-              }
-            }
-          },
-          "respond": {
-            "status": 200,
-            "headers": {
-              "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w012"
-            },
-            "body": {
-              "id": "80000001-1700000000",
-              "objectType": "qbd_customer",
-              "createdAt": "2026-10-05T09:14:03-07:00",
-              "updatedAt": "2026-10-05T09:14:03-07:00",
-              "revisionNumber": "sample",
-              "name": "Acme Supply",
-              "fullName": "Acme Supply",
-              "isActive": null,
-              "class": null,
-              "parent": null,
-              "sublevel": null,
-              "companyName": null,
-              "salutation": null,
-              "firstName": null,
-              "middleName": null,
-              "lastName": null,
-              "jobTitle": null,
-              "billingAddress": null,
-              "shippingAddress": null,
-              "alternateShippingAddresses": null,
-              "phone": null,
-              "alternatePhone": null,
-              "fax": null,
-              "email": null,
-              "ccEmail": null,
-              "contact": null,
-              "alternateContact": null,
-              "customContactFields": [],
-              "additionalContacts": [],
-              "customerType": null,
-              "terms": null,
-              "salesRepresentative": null,
-              "balance": "1234.50",
-              "totalBalance": null,
-              "salesTaxCode": null,
-              "salesTaxItem": null,
-              "resaleNumber": null,
-              "accountNumber": null,
-              "creditLimit": null,
-              "preferredPaymentMethod": null,
-              "creditCard": null,
-              "jobStatus": null,
-              "jobStartDate": null,
-              "jobProjectedEndDate": null,
-              "jobEndDate": null,
-              "jobDescription": null,
-              "jobType": null,
-              "note": null,
-              "additionalNotes": [],
-              "preferredDeliveryMethod": null,
-              "priceLevel": null,
-              "externalId": null,
-              "currency": null,
-              "customFields": []
-            }
-          }
-        }
-      ],
-      "outcome": {
-        "result": {
-          "id": "80000001-1700000000"
-        },
-        "retryDelaysMs": [
-          120000
-        ]
-      }
-    },
-    {
-      "name": "retry_after_above_60_s_is_not_waited_java",
-      "description": "The Java SDK does not wait out a Retry-After above 60 s, even within the total timeout: it throws the error at once and never retries sooner than asked.",
-      "only": [
-        "java"
-      ],
-      "client": {
-        "totalTimeoutMs": 300000
-      },
-      "call": {
-        "op": "qbd.customers.retrieve",
-        "kind": "call",
-        "path": {
-          "id": "80000001-1700000000"
-        }
-      },
-      "exchanges": [
-        {
-          "expect": {
-            "method": "GET",
-            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
-            "headers": {
-              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
-              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
-              "idempotency-key": {
-                "$absent": true
-              },
-              "prefer": {
-                "$absent": true
-              }
-            }
-          },
-          "respond": {
-            "status": 429,
-            "headers": {
-              "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w013",
-              "Daapi-Should-Retry": "true",
-              "Retry-After": "120"
-            },
-            "body": {
-              "error": {
-                "type": "RATE_LIMIT_ERROR",
-                "code": "RATE_LIMITED",
-                "message": "Conformance error RATE_LIMITED.",
-                "userFacingMessage": "Something went wrong. Please try again.",
-                "httpStatusCode": 429,
-                "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w013",
-                "cause": "Why RATE_LIMITED happens.",
-                "fixes": [
-                  {
-                    "actor": "end_user",
-                    "action": "Close the open dialog in QuickBooks Desktop."
-                  },
-                  {
-                    "actor": "developer",
-                    "action": "Retry after the end user confirms."
-                  }
-                ],
-                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#rate_limited",
-                "retryable": true,
-                "outcome": "not_applied",
-                "param": null,
-                "details": {}
-              }
-            }
-          }
-        }
-      ],
-      "outcome": {
-        "error": {
-          "class": "RateLimitError",
-          "type": "RATE_LIMIT_ERROR",
-          "code": "RATE_LIMITED",
-          "status": 429
-        },
-        "retryDelaysMs": []
-      }
-    },
-    {
-      "name": "retry_after_beyond_total_timeout_returns_error_without_retry",
-      "description": "Retry-After: 120 with a 60 s total timeout: waiting would end after the budget, so the SDK raises the 429 at once and sends no retry.",
-      "client": {
-        "totalTimeoutMs": 60000
-      },
-      "call": {
-        "op": "qbd.customers.retrieve",
-        "kind": "call",
-        "path": {
-          "id": "80000001-1700000000"
-        }
-      },
-      "exchanges": [
-        {
-          "expect": {
-            "method": "GET",
-            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
-            "headers": {
-              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
-              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
-              "idempotency-key": {
-                "$absent": true
-              },
-              "prefer": {
-                "$absent": true
-              }
-            }
-          },
-          "respond": {
-            "status": 429,
-            "headers": {
-              "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w014",
-              "Daapi-Should-Retry": "true",
-              "Retry-After": "120"
-            },
-            "body": {
-              "error": {
-                "type": "RATE_LIMIT_ERROR",
-                "code": "RATE_LIMITED",
-                "message": "Conformance error RATE_LIMITED.",
-                "userFacingMessage": "Something went wrong. Please try again.",
-                "httpStatusCode": 429,
-                "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w014",
-                "cause": "Why RATE_LIMITED happens.",
-                "fixes": [
-                  {
-                    "actor": "end_user",
-                    "action": "Close the open dialog in QuickBooks Desktop."
-                  },
-                  {
-                    "actor": "developer",
-                    "action": "Retry after the end user confirms."
-                  }
-                ],
-                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#rate_limited",
-                "retryable": true,
-                "outcome": "not_applied",
-                "param": null,
-                "details": {}
-              }
-            }
-          }
-        }
-      ],
-      "outcome": {
-        "error": {
-          "class": "RateLimitError",
-          "type": "RATE_LIMIT_ERROR",
-          "code": "RATE_LIMITED",
-          "status": 429
-        },
-        "retryDelaysMs": []
-      }
-    },
-    {
-      "name": "retry_after_2_s_is_honored",
-      "description": "Retry-After: 2 is waited in full (2 s, not the shorter exponential backoff) before the retry.",
-      "call": {
-        "op": "qbd.customers.retrieve",
-        "kind": "call",
-        "path": {
-          "id": "80000001-1700000000"
-        }
-      },
-      "exchanges": [
-        {
-          "expect": {
-            "method": "GET",
-            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
-            "headers": {
-              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
-              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
-              "idempotency-key": {
-                "$absent": true
-              },
-              "prefer": {
-                "$absent": true
-              }
-            }
-          },
-          "respond": {
-            "status": 429,
-            "headers": {
-              "Content-Type": "application/json; charset=utf-8",
               "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w015",
               "Daapi-Should-Retry": "true",
-              "Retry-After": "2"
+              "Retry-After": "0"
             },
             "body": {
               "error": {
@@ -3811,16 +4000,23 @@
       ],
       "outcome": {
         "result": {
-          "id": "80000001-1700000000"
-        },
-        "retryDelaysMs": [
-          2000
-        ]
+          "id": "80000001-1700000000",
+          "balance": "1234.50",
+          "name": "Acme Supply"
+        }
       }
     },
     {
-      "name": "retry_after_http_date_in_the_past_retries_at_once",
-      "description": "Retry-After as an HTTP date that has passed means no wait: the SDK retries at once instead of using its backoff.",
+      "name": "retry_after_120_s_within_total_timeout_is_waited",
+      "description": "Retry-After: 120 with a total timeout that leaves room for it: the SDK waits the full 120 s (not a 60 s cap, not its own shorter backoff) and then retries.",
+      "only": [
+        "node",
+        "python",
+        "dotnet"
+      ],
+      "client": {
+        "totalTimeoutMs": 300000
+      },
       "call": {
         "op": "qbd.customers.retrieve",
         "kind": "call",
@@ -3850,7 +4046,7 @@
               "Content-Type": "application/json; charset=utf-8",
               "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w017",
               "Daapi-Should-Retry": "true",
-              "Retry-After": "Wed, 21 Oct 2015 07:28:00 GMT"
+              "Retry-After": "120"
             },
             "body": {
               "error": {
@@ -3966,6 +4162,467 @@
           "id": "80000001-1700000000"
         },
         "retryDelaysMs": [
+          120000
+        ]
+      }
+    },
+    {
+      "name": "retry_after_above_60_s_is_not_waited_java",
+      "description": "The Java SDK does not wait out a Retry-After above 60 s, even within the total timeout: it throws the error at once and never retries sooner than asked.",
+      "only": [
+        "java"
+      ],
+      "client": {
+        "totalTimeoutMs": 300000
+      },
+      "call": {
+        "op": "qbd.customers.retrieve",
+        "kind": "call",
+        "path": {
+          "id": "80000001-1700000000"
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 429,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w019",
+              "Daapi-Should-Retry": "true",
+              "Retry-After": "120"
+            },
+            "body": {
+              "error": {
+                "type": "RATE_LIMIT_ERROR",
+                "code": "RATE_LIMITED",
+                "message": "Conformance error RATE_LIMITED.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 429,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w019",
+                "cause": "Why RATE_LIMITED happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#rate_limited",
+                "retryable": true,
+                "outcome": "not_applied",
+                "param": null,
+                "details": {}
+              }
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "error": {
+          "class": "RateLimitError",
+          "type": "RATE_LIMIT_ERROR",
+          "code": "RATE_LIMITED",
+          "status": 429
+        },
+        "retryDelaysMs": []
+      }
+    },
+    {
+      "name": "retry_after_beyond_total_timeout_returns_error_without_retry",
+      "description": "Retry-After: 120 with a 60 s total timeout: waiting would end after the budget, so the SDK raises the 429 at once and sends no retry.",
+      "client": {
+        "totalTimeoutMs": 60000
+      },
+      "call": {
+        "op": "qbd.customers.retrieve",
+        "kind": "call",
+        "path": {
+          "id": "80000001-1700000000"
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 429,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01a",
+              "Daapi-Should-Retry": "true",
+              "Retry-After": "120"
+            },
+            "body": {
+              "error": {
+                "type": "RATE_LIMIT_ERROR",
+                "code": "RATE_LIMITED",
+                "message": "Conformance error RATE_LIMITED.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 429,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01a",
+                "cause": "Why RATE_LIMITED happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#rate_limited",
+                "retryable": true,
+                "outcome": "not_applied",
+                "param": null,
+                "details": {}
+              }
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "error": {
+          "class": "RateLimitError",
+          "type": "RATE_LIMIT_ERROR",
+          "code": "RATE_LIMITED",
+          "status": 429
+        },
+        "retryDelaysMs": []
+      }
+    },
+    {
+      "name": "retry_after_2_s_is_honored",
+      "description": "Retry-After: 2 is waited in full (2 s, not the shorter exponential backoff) before the retry.",
+      "call": {
+        "op": "qbd.customers.retrieve",
+        "kind": "call",
+        "path": {
+          "id": "80000001-1700000000"
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 429,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01b",
+              "Daapi-Should-Retry": "true",
+              "Retry-After": "2"
+            },
+            "body": {
+              "error": {
+                "type": "RATE_LIMIT_ERROR",
+                "code": "RATE_LIMITED",
+                "message": "Conformance error RATE_LIMITED.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 429,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01b",
+                "cause": "Why RATE_LIMITED happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#rate_limited",
+                "retryable": true,
+                "outcome": "not_applied",
+                "param": null,
+                "details": {}
+              }
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01c"
+            },
+            "body": {
+              "id": "80000001-1700000000",
+              "objectType": "qbd_customer",
+              "createdAt": "2026-10-05T09:14:03-07:00",
+              "updatedAt": "2026-10-05T09:14:03-07:00",
+              "revisionNumber": "sample",
+              "name": "Acme Supply",
+              "fullName": "Acme Supply",
+              "isActive": null,
+              "class": null,
+              "parent": null,
+              "sublevel": null,
+              "companyName": null,
+              "salutation": null,
+              "firstName": null,
+              "middleName": null,
+              "lastName": null,
+              "jobTitle": null,
+              "billingAddress": null,
+              "shippingAddress": null,
+              "alternateShippingAddresses": null,
+              "phone": null,
+              "alternatePhone": null,
+              "fax": null,
+              "email": null,
+              "ccEmail": null,
+              "contact": null,
+              "alternateContact": null,
+              "customContactFields": [],
+              "additionalContacts": [],
+              "customerType": null,
+              "terms": null,
+              "salesRepresentative": null,
+              "balance": "1234.50",
+              "totalBalance": null,
+              "salesTaxCode": null,
+              "salesTaxItem": null,
+              "resaleNumber": null,
+              "accountNumber": null,
+              "creditLimit": null,
+              "preferredPaymentMethod": null,
+              "creditCard": null,
+              "jobStatus": null,
+              "jobStartDate": null,
+              "jobProjectedEndDate": null,
+              "jobEndDate": null,
+              "jobDescription": null,
+              "jobType": null,
+              "note": null,
+              "additionalNotes": [],
+              "preferredDeliveryMethod": null,
+              "priceLevel": null,
+              "externalId": null,
+              "currency": null,
+              "customFields": []
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "result": {
+          "id": "80000001-1700000000"
+        },
+        "retryDelaysMs": [
+          2000
+        ]
+      }
+    },
+    {
+      "name": "retry_after_http_date_in_the_past_retries_at_once",
+      "description": "Retry-After as an HTTP date that has passed means no wait: the SDK retries at once instead of using its backoff.",
+      "call": {
+        "op": "qbd.customers.retrieve",
+        "kind": "call",
+        "path": {
+          "id": "80000001-1700000000"
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 429,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01d",
+              "Daapi-Should-Retry": "true",
+              "Retry-After": "Wed, 21 Oct 2015 07:28:00 GMT"
+            },
+            "body": {
+              "error": {
+                "type": "RATE_LIMIT_ERROR",
+                "code": "RATE_LIMITED",
+                "message": "Conformance error RATE_LIMITED.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 429,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01d",
+                "cause": "Why RATE_LIMITED happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#rate_limited",
+                "retryable": true,
+                "outcome": "not_applied",
+                "param": null,
+                "details": {}
+              }
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/quickbooks-desktop/customers/80000001-1700000000",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$absent": true
+              },
+              "prefer": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01e"
+            },
+            "body": {
+              "id": "80000001-1700000000",
+              "objectType": "qbd_customer",
+              "createdAt": "2026-10-05T09:14:03-07:00",
+              "updatedAt": "2026-10-05T09:14:03-07:00",
+              "revisionNumber": "sample",
+              "name": "Acme Supply",
+              "fullName": "Acme Supply",
+              "isActive": null,
+              "class": null,
+              "parent": null,
+              "sublevel": null,
+              "companyName": null,
+              "salutation": null,
+              "firstName": null,
+              "middleName": null,
+              "lastName": null,
+              "jobTitle": null,
+              "billingAddress": null,
+              "shippingAddress": null,
+              "alternateShippingAddresses": null,
+              "phone": null,
+              "alternatePhone": null,
+              "fax": null,
+              "email": null,
+              "ccEmail": null,
+              "contact": null,
+              "alternateContact": null,
+              "customContactFields": [],
+              "additionalContacts": [],
+              "customerType": null,
+              "terms": null,
+              "salesRepresentative": null,
+              "balance": "1234.50",
+              "totalBalance": null,
+              "salesTaxCode": null,
+              "salesTaxItem": null,
+              "resaleNumber": null,
+              "accountNumber": null,
+              "creditLimit": null,
+              "preferredPaymentMethod": null,
+              "creditCard": null,
+              "jobStatus": null,
+              "jobStartDate": null,
+              "jobProjectedEndDate": null,
+              "jobEndDate": null,
+              "jobDescription": null,
+              "jobType": null,
+              "note": null,
+              "additionalNotes": [],
+              "preferredDeliveryMethod": null,
+              "priceLevel": null,
+              "externalId": null,
+              "currency": null,
+              "customFields": []
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "result": {
+          "id": "80000001-1700000000"
+        },
+        "retryDelaysMs": [
           0
         ]
       }
@@ -4003,7 +4660,7 @@
             "status": 429,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w019",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01f",
               "Daapi-Should-Retry": "true",
               "Retry-After": "Fri, 31 Dec 2100 23:59:59 GMT"
             },
@@ -4015,7 +4672,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 429,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w019",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01f",
                 "cause": "Why RATE_LIMITED happens.",
                 "fixes": [
                   {
@@ -4070,7 +4727,7 @@
             "status": 503,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01a",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01g",
               "Daapi-Should-Retry": "true",
               "Retry-After": "0"
             },
@@ -4082,7 +4739,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 503,
                 "integrationCode": "0x80040414",
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01a",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01g",
                 "cause": "Why QBD_MODAL_DIALOG_OPEN happens.",
                 "fixes": [
                   {
@@ -4112,7 +4769,7 @@
             "status": 503,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01b",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01h",
               "Daapi-Should-Retry": "true",
               "Retry-After": "0"
             },
@@ -4124,7 +4781,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 503,
                 "integrationCode": "0x80040414",
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01b",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01h",
                 "cause": "Why QBD_MODAL_DIALOG_OPEN happens.",
                 "fixes": [
                   {
@@ -4154,7 +4811,7 @@
             "status": 503,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01c",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
               "Daapi-Should-Retry": "true",
               "Retry-After": "0"
             },
@@ -4166,7 +4823,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 503,
                 "integrationCode": "0x80040414",
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01c",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
                 "cause": "Why QBD_MODAL_DIALOG_OPEN happens.",
                 "fixes": [
                   {
@@ -4194,7 +4851,7 @@
           "type": "INTEGRATION_CONNECTION_ERROR",
           "code": "QBD_MODAL_DIALOG_OPEN",
           "status": 503,
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01c",
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
           "retryable": true,
           "integrationCode": "0x80040414"
         }
@@ -4223,7 +4880,7 @@
             "status": 503,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01d",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01j",
               "Daapi-Should-Retry": "true",
               "Retry-After": "0"
             },
@@ -4235,7 +4892,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 503,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01d",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01j",
                 "cause": "Why SERVICE_UNAVAILABLE happens.",
                 "fixes": [
                   {
@@ -4304,7 +4961,7 @@
             "status": 400,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01e",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01k",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -4315,7 +4972,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 400,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01e",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01k",
                 "cause": "Why INVALID_PARAMETER happens.",
                 "fixes": [
                   {
@@ -4345,7 +5002,7 @@
           "status": 400,
           "message": "lines[0].rate must be a decimal string.",
           "userFacingMessage": "Something went wrong. Please try again.",
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01e",
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01k",
           "param": "lines[0].rate",
           "retryable": false,
           "outcome": "not_applied",
@@ -4393,7 +5050,7 @@
             "status": 502,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01f",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
               "Daapi-Should-Retry": "true",
               "Retry-After": "0"
             },
@@ -4405,7 +5062,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 502,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01f",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
                 "cause": "Why QBD_WRITE_OUTCOME_UNKNOWN happens.",
                 "fixes": [
                   {
@@ -4434,7 +5091,7 @@
           "code": "QBD_WRITE_OUTCOME_UNKNOWN",
           "status": 502,
           "outcome": "unknown",
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01f"
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01z"
         }
       }
     },
@@ -4467,7 +5124,7 @@
             "status": 500,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01g",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01m",
               "Daapi-Should-Retry": "true"
             },
             "body": {
@@ -4478,7 +5135,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 500,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01g",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01m",
                 "cause": "Why INTERNAL_ERROR happens.",
                 "fixes": [
                   {
@@ -4512,6 +5169,100 @@
       }
     },
     {
+      "name": "result_unavailable_error_is_typed_and_never_retried",
+      "description": "500 INTERNAL_ERROR with details.reason result_unavailable (the write completed and was applied, but its stored result is gone) raises ResultUnavailableError (outcome applied, recoveredObjectId null) and is never retried, even with Daapi-Should-Retry: true.",
+      "call": {
+        "op": "endUsers.passthrough",
+        "kind": "call",
+        "path": {
+          "id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb"
+        },
+        "params": {
+          "CustomerAddRq": {
+            "CustomerAdd": {
+              "Name": "Acme Supply"
+            }
+          }
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "POST",
+            "path": "/v1/end-users/eu_01j9x4m6v4c8k2t7q0r5s3w1zb/passthrough/quickbooks_desktop",
+            "headers": {
+              "idempotency-key": {
+                "$uuid": true
+              }
+            },
+            "body": {
+              "CustomerAddRq": {
+                "CustomerAdd": {
+                  "Name": "Acme Supply"
+                }
+              }
+            }
+          },
+          "respond": {
+            "status": 500,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01n",
+              "Daapi-Should-Retry": "true",
+              "Retry-After": "0"
+            },
+            "body": {
+              "error": {
+                "type": "INTERNAL_ERROR",
+                "code": "INTERNAL_ERROR",
+                "message": "The request completed and QuickBooks applied it, but its result is no longer available. Do not send it again.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 500,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01n",
+                "cause": "Why INTERNAL_ERROR happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#internal_error",
+                "retryable": false,
+                "outcome": "applied",
+                "param": null,
+                "details": {
+                  "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01n",
+                  "reason": "result_unavailable"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "error": {
+          "class": "ResultUnavailableError",
+          "type": "INTERNAL_ERROR",
+          "code": "INTERNAL_ERROR",
+          "status": 500,
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01n",
+          "outcome": "applied",
+          "retryable": false,
+          "recoveredObjectId": null,
+          "details": {
+            "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01n",
+            "reason": "result_unavailable"
+          },
+          "idempotencyKey": "$uuid"
+        }
+      }
+    },
+    {
       "name": "authentication_error",
       "description": "401 API_KEY_INVALID raises AuthenticationError.",
       "call": {
@@ -4531,7 +5282,7 @@
             "status": 401,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01h",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -4542,7 +5293,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 401,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01h",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
                 "cause": "Why API_KEY_INVALID happens.",
                 "fixes": [
                   {
@@ -4593,7 +5344,7 @@
             "status": 403,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01p",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -4604,7 +5355,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 403,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01p",
                 "cause": "Why PERMISSION_DENIED happens.",
                 "fixes": [
                   {
@@ -4632,7 +5383,7 @@
           "type": "PERMISSION_ERROR",
           "code": "PERMISSION_DENIED",
           "status": 403,
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01z"
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01p"
         }
       }
     },
@@ -4656,7 +5407,7 @@
             "status": 402,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01j",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01q",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -4667,7 +5418,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 402,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01j",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01q",
                 "cause": "Why BILLING_REQUIRED happens.",
                 "fixes": [
                   {
@@ -4695,7 +5446,7 @@
           "type": "BILLING_ERROR",
           "code": "BILLING_REQUIRED",
           "status": 402,
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01j"
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01q"
         }
       }
     },
@@ -4719,7 +5470,7 @@
             "status": 404,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01k",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01r",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -4730,7 +5481,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 404,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01k",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01r",
                 "cause": "Why QBD_OBJECT_NOT_FOUND happens.",
                 "fixes": [
                   {
@@ -4758,7 +5509,7 @@
           "type": "INTEGRATION_ERROR",
           "code": "QBD_OBJECT_NOT_FOUND",
           "status": 404,
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01k"
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01r"
         }
       }
     },
@@ -4782,7 +5533,7 @@
             "status": 418,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01s",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -4793,7 +5544,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 418,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01z",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01s",
                 "cause": "Why FUTURE_ERROR_CODE happens.",
                 "fixes": [
                   {
@@ -4894,7 +5645,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01m"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01t"
             },
             "body": {
               "id": "7-1700000000",
@@ -4984,7 +5735,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01n"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z"
             },
             "body": {
               "id": "1A-1797325899",
@@ -5046,7 +5797,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v"
             },
             "body": {
               "id": "7-1700000000",
@@ -5094,7 +5845,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01p"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w020"
             },
             "body": {
               "status": "ok",
@@ -5269,7 +6020,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01q"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w021"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -5370,7 +6121,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01r"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w022"
             },
             "body": {
               "CustomerQueryRs": {
@@ -5424,7 +6175,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/xml; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01s"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w023"
             },
             "rawBody": "<QBXMLMsgsRs><CustomerQueryRs statusCode=\"0\" statusSeverity=\"Info\" statusMessage=\"Status OK\"></CustomerQueryRs></QBXMLMsgsRs>"
           }
@@ -5474,7 +6225,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01t",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w024",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -5485,7 +6236,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01t",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w024",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -5527,7 +6278,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01z"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w025"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zx",
@@ -5619,7 +6370,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -5630,7 +6381,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -5672,7 +6423,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w020"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w027"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -5736,7 +6487,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w021"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w028"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -5870,7 +6621,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -5881,7 +6632,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -5923,7 +6674,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w023"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02a"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -5969,7 +6720,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 409,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w022",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w029",
                 "cause": "Why QBD_DUPLICATE_NAME happens.",
                 "fixes": [
                   {
@@ -5998,7 +6749,7 @@
           "class": "IntegrationError",
           "code": "QBD_DUPLICATE_NAME",
           "type": "INTEGRATION_ERROR",
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w022"
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w029"
         }
       }
     },
@@ -6034,7 +6785,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -6045,7 +6796,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -6087,7 +6838,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w025"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02c"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -6175,7 +6926,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02d",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -6186,7 +6937,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02d",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -6228,7 +6979,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w027"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02e"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zr",
@@ -6292,7 +7043,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w028"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02f"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zr",
@@ -6434,7 +7185,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02d",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -6445,7 +7196,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02d",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -6634,7 +7385,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02d",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -6645,7 +7396,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02d",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -6687,7 +7438,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02b"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02z"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zr",
@@ -6787,7 +7538,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -6798,7 +7549,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -6840,7 +7591,7 @@
             "status": 429,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02c",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02j",
               "Daapi-Should-Retry": "true",
               "Retry-After": "0"
             },
@@ -6852,7 +7603,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 429,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02c",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02j",
                 "cause": "Why RATE_LIMITED happens.",
                 "fixes": [
                   {
@@ -6928,7 +7679,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -6939,7 +7690,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -6981,7 +7732,7 @@
             "status": 503,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02e",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02z",
               "Daapi-Should-Retry": "true"
             },
             "body": {
@@ -6992,7 +7743,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 503,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02e",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02z",
                 "cause": "Why SERVICE_UNAVAILABLE happens.",
                 "fixes": [
                   {
@@ -7068,7 +7819,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -7079,7 +7830,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -7121,7 +7872,7 @@
             "status": 404,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02g",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02n",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -7132,7 +7883,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 404,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02g",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02n",
                 "cause": "Why RESOURCE_MISSING happens.",
                 "fixes": [
                   {
@@ -7208,7 +7959,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -7219,7 +7970,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -7317,7 +8068,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -7328,7 +8079,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -7370,7 +8121,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02k"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02r"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -7516,7 +8267,7 @@
             "status": 504,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -7527,7 +8278,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 504,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w01v",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
                 "cause": "Why QBD_REQUEST_TIMEOUT happens.",
                 "fixes": [
                   {
@@ -7569,7 +8320,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02m"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02t"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -7615,7 +8366,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 502,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02z",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02s",
                 "cause": "Why QBD_WRITE_OUTCOME_UNKNOWN happens.",
                 "fixes": [
                   {
@@ -7646,6 +8397,326 @@
           "class": "OutcomeUnknownError",
           "code": "QBD_WRITE_OUTCOME_UNKNOWN",
           "outcome": "unknown",
+          "idempotencyKey": "conformance-pending-key-1"
+        }
+      }
+    },
+    {
+      "name": "sync_timeout_then_recovered_write_raises_result_unavailable",
+      "description": "After 504 QBD_REQUEST_TIMEOUT, the long-polled write succeeds by recovery (outcome applied, recovered, result null, recoveredObjectId set). The SDK raises ResultUnavailableError with the request ID, outcome applied and recoveredObjectId, never a null or unparseable result, and never resends the write.",
+      "client": {
+        "timeoutMs": 20000
+      },
+      "call": {
+        "op": "qbd.invoices.create",
+        "kind": "call",
+        "params": {
+          "customerId": "80000001-1700000000",
+          "transactionDate": "2026-10-05",
+          "memo": "Conformance invoice",
+          "lines": [
+            {
+              "itemId": "80000005-1700000000",
+              "quantity": 2,
+              "rate": "52.75"
+            }
+          ]
+        },
+        "options": {
+          "idempotencyKey": "conformance-pending-key-1"
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "POST",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": "conformance-pending-key-1",
+              "content-type": {
+                "$regex": "^application/json"
+              }
+            }
+          },
+          "respond": {
+            "status": 504,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+              "Daapi-Should-Retry": "false"
+            },
+            "body": {
+              "error": {
+                "type": "INTEGRATION_CONNECTION_ERROR",
+                "code": "QBD_REQUEST_TIMEOUT",
+                "message": "Conformance error QBD_REQUEST_TIMEOUT.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 504,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+                "cause": "Why QBD_REQUEST_TIMEOUT happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#qbd_request_timeout",
+                "retryable": false,
+                "outcome": "pending",
+                "param": null,
+                "details": {
+                  "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+                }
+              }
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+            "query": {
+              "waitSeconds": {
+                "$regex": "^[0-9]+$"
+              }
+            },
+            "headers": {
+              "idempotency-key": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02z"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.create",
+              "method": "POST",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "sync",
+              "status": "succeeded",
+              "outcome": "applied",
+              "sentAt": null,
+              "completedAt": "2026-10-05T16:09:00.000Z",
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": null,
+              "queuePosition": null,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": true,
+              "recoveredObjectId": "8000000C-1700000000",
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": null,
+              "resultExpired": false
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "error": {
+          "class": "ResultUnavailableError",
+          "type": "INTERNAL_ERROR",
+          "code": "INTERNAL_ERROR",
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+          "outcome": "applied",
+          "retryable": false,
+          "recoveredObjectId": "8000000C-1700000000",
+          "details": {
+            "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+            "reason": "result_unavailable",
+            "recoveredObjectId": "8000000C-1700000000"
+          },
+          "idempotencyKey": "conformance-pending-key-1"
+        }
+      }
+    },
+    {
+      "name": "sync_timeout_then_recovered_expired_write_raises_result_unavailable",
+      "description": "After 504 QBD_REQUEST_TIMEOUT, the long-polled write succeeded by recovery and its result is also past retention (resultExpired true). The SDK raises ResultUnavailableError with the request ID, outcome applied and recoveredObjectId, not the generic expiry error.",
+      "client": {
+        "timeoutMs": 20000
+      },
+      "call": {
+        "op": "qbd.invoices.create",
+        "kind": "call",
+        "params": {
+          "customerId": "80000001-1700000000",
+          "transactionDate": "2026-10-05",
+          "memo": "Conformance invoice",
+          "lines": [
+            {
+              "itemId": "80000005-1700000000",
+              "quantity": 2,
+              "rate": "52.75"
+            }
+          ]
+        },
+        "options": {
+          "idempotencyKey": "conformance-pending-key-1"
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "POST",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": "conformance-pending-key-1",
+              "content-type": {
+                "$regex": "^application/json"
+              }
+            }
+          },
+          "respond": {
+            "status": 504,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+              "Daapi-Should-Retry": "false"
+            },
+            "body": {
+              "error": {
+                "type": "INTEGRATION_CONNECTION_ERROR",
+                "code": "QBD_REQUEST_TIMEOUT",
+                "message": "Conformance error QBD_REQUEST_TIMEOUT.",
+                "userFacingMessage": "Something went wrong. Please try again.",
+                "httpStatusCode": 504,
+                "integrationCode": null,
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w026",
+                "cause": "Why QBD_REQUEST_TIMEOUT happens.",
+                "fixes": [
+                  {
+                    "actor": "end_user",
+                    "action": "Close the open dialog in QuickBooks Desktop."
+                  },
+                  {
+                    "actor": "developer",
+                    "action": "Retry after the end user confirms."
+                  }
+                ],
+                "docsUrl": "https://www.desktopaccountingapi.com/docs/errors/#qbd_request_timeout",
+                "retryable": false,
+                "outcome": "pending",
+                "param": null,
+                "details": {
+                  "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+                }
+              }
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+            "query": {
+              "waitSeconds": {
+                "$regex": "^[0-9]+$"
+              }
+            },
+            "headers": {
+              "idempotency-key": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02v"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.create",
+              "method": "POST",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "sync",
+              "status": "succeeded",
+              "outcome": "applied",
+              "sentAt": null,
+              "completedAt": "2026-10-05T16:09:00.000Z",
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": null,
+              "queuePosition": null,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": true,
+              "recoveredObjectId": "8000000C-1700000000",
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": null,
+              "resultExpired": true
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "error": {
+          "class": "ResultUnavailableError",
+          "type": "INTERNAL_ERROR",
+          "code": "INTERNAL_ERROR",
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+          "outcome": "applied",
+          "retryable": false,
+          "recoveredObjectId": "8000000C-1700000000",
+          "details": {
+            "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+            "reason": "result_unavailable",
+            "recoveredObjectId": "8000000C-1700000000"
+          },
           "idempotencyKey": "conformance-pending-key-1"
         }
       }
@@ -7689,7 +8760,7 @@
             "status": 400,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02n",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w030",
               "Daapi-Should-Retry": "false"
             },
             "body": {
@@ -7700,7 +8771,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 400,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02n",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w030",
                 "cause": "Why INVALID_PARAMETER happens.",
                 "fixes": [
                   {
@@ -7776,7 +8847,7 @@
             "status": 202,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02z",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w031",
               "Location": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd"
             },
             "body": {
@@ -7841,7 +8912,7 @@
             "status": 503,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02e",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02z",
               "Daapi-Should-Retry": "true"
             },
             "body": {
@@ -7852,7 +8923,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 503,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02e",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02z",
                 "cause": "Why SERVICE_UNAVAILABLE happens.",
                 "fixes": [
                   {
@@ -7930,7 +9001,7 @@
             "status": 202,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02r",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w034",
               "Location": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd"
             },
             "body": {
@@ -7995,7 +9066,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02s"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w035"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -8041,7 +9112,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 500,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02q",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w033",
                 "cause": "Why QBD_RESPONSE_UNREADABLE happens.",
                 "fixes": [
                   {
@@ -8083,7 +9154,359 @@
           "class": "InternalError",
           "code": "QBD_RESPONSE_UNREADABLE",
           "outcome": "applied",
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w02q",
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w033",
+          "idempotencyKey": "$uuid"
+        }
+      }
+    },
+    {
+      "name": "async_wait_recovered_write_raises_result_unavailable",
+      "description": "handle.wait() on a write that succeeded by recovery (outcome applied, recovered, result null, recoveredObjectId set) raises ResultUnavailableError with the request ID, outcome applied and recoveredObjectId.",
+      "call": {
+        "op": "qbd.invoices.create",
+        "kind": "enqueue",
+        "params": {
+          "customerId": "80000001-1700000000",
+          "transactionDate": "2026-10-05",
+          "memo": "Conformance invoice",
+          "lines": [
+            {
+              "itemId": "80000005-1700000000",
+              "quantity": 2,
+              "rate": "52.75"
+            }
+          ]
+        },
+        "wait": {
+          "timeoutMs": 20000
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "POST",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$uuid": true
+              },
+              "content-type": {
+                "$regex": "^application/json"
+              },
+              "prefer": "respond-async"
+            }
+          },
+          "respond": {
+            "status": 202,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w036",
+              "Location": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.create",
+              "method": "POST",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "async",
+              "status": "queued",
+              "outcome": "pending",
+              "sentAt": null,
+              "completedAt": null,
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": "awaiting_check_in",
+              "queuePosition": 1,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": false,
+              "recoveredObjectId": null,
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": null,
+              "resultExpired": false
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+            "query": {
+              "waitSeconds": {
+                "$regex": "^[0-9]+$"
+              }
+            },
+            "headers": {
+              "idempotency-key": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w037"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.create",
+              "method": "POST",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "async",
+              "status": "succeeded",
+              "outcome": "applied",
+              "sentAt": null,
+              "completedAt": "2026-10-05T16:09:00.000Z",
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": null,
+              "queuePosition": null,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": true,
+              "recoveredObjectId": "8000000C-1700000000",
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": null,
+              "resultExpired": false
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "handle": {
+          "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+          "status": "queued"
+        },
+        "error": {
+          "class": "ResultUnavailableError",
+          "type": "INTERNAL_ERROR",
+          "code": "INTERNAL_ERROR",
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+          "outcome": "applied",
+          "retryable": false,
+          "recoveredObjectId": "8000000C-1700000000",
+          "details": {
+            "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+            "reason": "result_unavailable",
+            "recoveredObjectId": "8000000C-1700000000"
+          },
+          "idempotencyKey": "$uuid"
+        }
+      }
+    },
+    {
+      "name": "async_wait_recovered_expired_write_raises_result_unavailable",
+      "description": "handle.wait() on a write that succeeded by recovery and whose result is also past retention (resultExpired true) raises ResultUnavailableError with the request ID, outcome applied and recoveredObjectId, not the generic expiry error.",
+      "call": {
+        "op": "qbd.invoices.create",
+        "kind": "enqueue",
+        "params": {
+          "customerId": "80000001-1700000000",
+          "transactionDate": "2026-10-05",
+          "memo": "Conformance invoice",
+          "lines": [
+            {
+              "itemId": "80000005-1700000000",
+              "quantity": 2,
+              "rate": "52.75"
+            }
+          ]
+        },
+        "wait": {
+          "timeoutMs": 20000
+        }
+      },
+      "exchanges": [
+        {
+          "expect": {
+            "method": "POST",
+            "path": "/v1/quickbooks-desktop/invoices",
+            "headers": {
+              "authorization": "Bearer sk_test_Conformance0Key0For0SDK0Tests000010nQFLR",
+              "daapi-end-user-id": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "idempotency-key": {
+                "$uuid": true
+              },
+              "content-type": {
+                "$regex": "^application/json"
+              },
+              "prefer": "respond-async"
+            }
+          },
+          "respond": {
+            "status": 202,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w038",
+              "Location": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.create",
+              "method": "POST",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "async",
+              "status": "queued",
+              "outcome": "pending",
+              "sentAt": null,
+              "completedAt": null,
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": "awaiting_check_in",
+              "queuePosition": 1,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": false,
+              "recoveredObjectId": null,
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": null,
+              "resultExpired": false
+            }
+          }
+        },
+        {
+          "expect": {
+            "method": "GET",
+            "path": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+            "query": {
+              "waitSeconds": {
+                "$regex": "^[0-9]+$"
+              }
+            },
+            "headers": {
+              "idempotency-key": {
+                "$absent": true
+              }
+            }
+          },
+          "respond": {
+            "status": 200,
+            "headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w039"
+            },
+            "body": {
+              "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+              "objectType": "request",
+              "createdAt": "2026-10-05T16:03:59.002Z",
+              "projectId": "proj_01j9x4m6v4c8k2t7q0r5s3w1zf",
+              "endUserId": "eu_01j9x4m6v4c8k2t7q0r5s3w1zb",
+              "connectionId": "conn_01j9x4m6v4c8k2t7q0r5s3w1zc",
+              "operationId": "qbd.invoices.create",
+              "method": "POST",
+              "path": "/v1/quickbooks-desktop/invoices",
+              "mode": "async",
+              "status": "succeeded",
+              "outcome": "applied",
+              "sentAt": null,
+              "completedAt": "2026-10-05T16:09:00.000Z",
+              "durationMs": null,
+              "idempotencyKeyPresent": false,
+              "previousRequestId": null,
+              "waitingReason": null,
+              "queuePosition": null,
+              "queueTtlExpiresAt": null,
+              "timings": {
+                "queuedMs": null,
+                "quickbooksMs": null,
+                "totalMs": null
+              },
+              "quickbooks": {
+                "qbxmlVersion": null,
+                "messageSetId": null,
+                "statusCode": null,
+                "statusSeverity": null
+              },
+              "warnings": [],
+              "recovered": true,
+              "recoveredObjectId": "8000000C-1700000000",
+              "timeline": [],
+              "diagnosis": null,
+              "error": null,
+              "result": null,
+              "resultExpired": true
+            }
+          }
+        }
+      ],
+      "outcome": {
+        "handle": {
+          "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+          "status": "queued"
+        },
+        "error": {
+          "class": "ResultUnavailableError",
+          "type": "INTERNAL_ERROR",
+          "code": "INTERNAL_ERROR",
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+          "outcome": "applied",
+          "retryable": false,
+          "recoveredObjectId": "8000000C-1700000000",
+          "details": {
+            "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
+            "reason": "result_unavailable",
+            "recoveredObjectId": "8000000C-1700000000"
+          },
           "idempotencyKey": "$uuid"
         }
       }
@@ -8143,7 +9566,7 @@
             "status": 202,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02t",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03a",
               "Location": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd",
               "Preference-Applied": "respond-async"
             },
@@ -8209,7 +9632,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02z"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03b"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -8273,7 +9696,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w02v"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03c"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -8422,7 +9845,7 @@
             "status": 202,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w031",
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03e",
               "Location": "/v1/requests/req_01j9x4m6v4c8k2t7q0r5s3w1zd"
             },
             "body": {
@@ -8487,7 +9910,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w032"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03f"
             },
             "body": {
               "id": "req_01j9x4m6v4c8k2t7q0r5s3w1zd",
@@ -8533,7 +9956,7 @@
                 "userFacingMessage": "Something went wrong. Please try again.",
                 "httpStatusCode": 502,
                 "integrationCode": null,
-                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w030",
+                "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w03d",
                 "cause": "Why QBD_WRITE_OUTCOME_UNKNOWN happens.",
                 "fixes": [
                   {
@@ -8565,7 +9988,7 @@
         "error": {
           "class": "OutcomeUnknownError",
           "code": "QBD_WRITE_OUTCOME_UNKNOWN",
-          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w030",
+          "requestId": "req_01j9x4m6v4c8k2t7q0r5s3w03d",
           "idempotencyKey": "$uuid"
         }
       }
@@ -8606,7 +10029,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w033"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03g"
             },
             "body": {
               "objectType": "list",
@@ -8747,7 +10170,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w034"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03h"
             },
             "body": {
               "status": "ok",
@@ -8795,7 +10218,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w035"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03z"
             },
             "body": {
               "status": "ok",
@@ -8840,7 +10263,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w036"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03j"
             },
             "body": {
               "id": "80000001-1700000000",
@@ -8941,7 +10364,7 @@
             "status": 200,
             "headers": {
               "Content-Type": "application/json; charset=utf-8",
-              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w037"
+              "Daapi-Request-Id": "req_01j9x4m6v4c8k2t7q0r5s3w03k"
             },
             "body": {
               "status": "ok",

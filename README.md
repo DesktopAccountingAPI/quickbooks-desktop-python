@@ -15,12 +15,12 @@ The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.
 pip install desktopaccountingapi-quickbooks-desktop
 ```
 
-The current version is **0.10.0**. To pin it exactly:
+The current version is **0.11.0**. To pin it exactly:
 
 ```sh
-pip install "desktopaccountingapi-quickbooks-desktop==0.10.0"
-uv add "desktopaccountingapi-quickbooks-desktop==0.10.0"
-poetry add "desktopaccountingapi-quickbooks-desktop==0.10.0"
+pip install "desktopaccountingapi-quickbooks-desktop==0.11.0"
+uv add "desktopaccountingapi-quickbooks-desktop==0.11.0"
+poetry add "desktopaccountingapi-quickbooks-desktop==0.11.0"
 ```
 
 The distribution is `desktopaccountingapi-quickbooks-desktop`; the import package is `desktopaccountingapi`.
@@ -341,7 +341,7 @@ Every error is a `DaapiError`. Problems found before sending (missing key, malfo
 | `INTEGRATION_CONNECTION_ERROR` | `IntegrationConnectionError` |
 | `INTEGRATION_ERROR` | `IntegrationError` |
 | `OUTCOME_UNKNOWN_ERROR` | `OutcomeUnknownError` |
-| `INTERNAL_ERROR` | `InternalError` |
+| `INTERNAL_ERROR` | `InternalError` (and `ResultUnavailableError` when the result is no longer available: for an applied write (`outcome` `applied`), never send it again and read the object instead (`recovered_object_id` when set); for a read (`not_applicable`), it is safe to send it again) |
 | any other | `APIError` |
 
 `APIConnectionError` (with `APITimeoutError`) means no response arrived after all retries. `RequestPendingError` means a request is still running in QuickBooks when the time budget ended. `WebhookVerificationError` comes from webhook verification. `ApiError`, `ApiConnectionError` and `ApiTimeoutError` are aliases.
@@ -521,7 +521,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 - The Python, Node.js, .NET and Java SDKs and the [MCP server](https://github.com/DesktopAccountingAPI/quickbooks-desktop-mcp) are released together with the same version number, generated from the same API contract.
 - Every release is listed in [CHANGELOG.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CHANGELOG.md) and tagged `v<version>` on GitHub.
 - The HTTP API is versioned in its path (`/v1`) and is additive-only from launch day. After launch, a breaking change requires a new version or an announced deprecation. Additive changes include new operations, fields, enum values and error codes; accept fields and enum values you do not know. This HTTP policy is separate from SDK versioning.
-- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:cc10a44bbe26...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
+- Each release is generated from one version of the API contract; `.daapi-sdk.json` and `desktopaccountingapi.CONTRACT_SHA256` record its digest (`sha256:b091ed70ce41...` for this release), `desktopaccountingapi.API_VERSION` the API version and `desktopaccountingapi.__version__` the package version.
 
 ## Support
 
@@ -535,7 +535,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 
 The toolchain is pinned in `mise.toml`. `mise run check` installs the pinned dev tools with uv and runs ruff, `mypy --strict`, the unit tests, the cross-language conformance suite (against `conformance/mock-server.mjs`), the example type checks, the README samples (`mypy --strict` on every Python block of this file, and the quickstart against the mock server) and a build plus clean install of the wheel. Set `UV_PYTHON=3.9` (or any supported version) to run it on another interpreter.
 
-To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.10.0"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
+To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.11.0"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
 
 ## License
 

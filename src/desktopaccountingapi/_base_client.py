@@ -29,6 +29,7 @@ from ._errors import (
     DaapiError,
     OutcomeUnknownError,
     RequestPendingError,
+    ResultUnavailableError,
     error_from_object,
     error_from_response,
 )
@@ -174,6 +175,9 @@ def backoff_delay(attempt: int, headers: Optional[httpx.Headers] = None) -> floa
 def should_retry(response_status: int, headers: httpx.Headers, error: APIError) -> bool:
     """Retry decision for an error response. ``Daapi-Should-Retry`` wins over status heuristics."""
     if error.outcome in ("unknown", "pending"):
+        return False
+    if isinstance(error, ResultUnavailableError):
+        # The write was applied and only its result is gone: sending it again would write twice.
         return False
     flag = (headers.get("daapi-should-retry") or "").strip().lower()
     if flag == "false":
@@ -370,6 +374,11 @@ def settle_request(
             # QBD_RESPONSE_UNREADABLE, outcome applied): raise that catalog error, never None.
             code = error.get("httpStatusCode")
             raise error_from_object(error, status=code if isinstance(code, int) else None, headers=headers, body=data)
+        if data.get("result") is None and (data.get("recovered") or data.get("recoveredObjectId")):
+            # A single write the platform recovered after a lost acknowledgement: QuickBooks applied
+            # it, but its response body never arrived, so there is no result to return (review R3-03).
+            # This comes before the expiry check: an expired recovered write is still this error (SA-03).
+            raise _recovered_write_error(data, request_id, headers)
         if data.get("result") is None and data.get("resultExpired"):
             raise DaapiError(f"Request {request_id} succeeded, but its result is past the retention period.")
         return True, cast_result(data.get("result"))
@@ -394,6 +403,28 @@ def settle_request(
             body=data,
         )
     return False, None
+
+
+def _recovered_write_error(
+    data: Mapping[str, Any], request_id: Optional[str], headers: httpx.Headers
+) -> ResultUnavailableError:
+    object_id = data.get("recoveredObjectId") if isinstance(data.get("recoveredObjectId"), str) else None
+    message = (
+        f"Request {request_id} completed and QuickBooks applied it, but its result is not available: "
+        "the platform recovered the write without QuickBooks' response. "
+        + (f"Retrieve the object by its ID {object_id}. " if object_id else "")
+        + "Do not send it again."
+    )
+    error = {
+        "type": "INTERNAL_ERROR",
+        "code": "INTERNAL_ERROR",
+        "message": message,
+        "requestId": request_id,
+        "retryable": False,
+        "outcome": "applied",
+        "details": {"requestId": request_id, "reason": "result_unavailable", "recoveredObjectId": object_id},
+    }
+    return ResultUnavailableError(message, status=None, headers=headers, error=error, body=data)
 
 
 class _BaseClient:

@@ -396,6 +396,26 @@ def test_enqueue_handle() -> None:
     assert info.value.code == "QBD_DUPLICATE_NAME" and info.value.status == 409
 
 
+@pytest.mark.parametrize("result_expired", [False, True])
+def test_handle_result_of_recovered_write_raises_result_unavailable(result_expired: bool) -> None:
+    recovered = request_json(
+        "succeeded",
+        outcome="applied",
+        resultExpired=result_expired,
+        recovered=True,
+        recoveredObjectId="8000000C-1700000000",
+    )
+    rec = Recorder([httpx.Response(202, json=request_json("queued")), httpx.Response(200, json=recovered)])
+    handle = client_for(rec).qbd.invoices.enqueue.create(customer_id="80000001-1", idempotency_key="key-1")
+    with pytest.raises(daapi.ResultUnavailableError) as info:
+        handle.result()
+    error = info.value
+    assert isinstance(error, daapi.InternalError)
+    assert error.request_id == "req_1" and error.outcome == "applied" and error.retryable is False
+    assert error.recovered_object_id == "8000000C-1700000000"
+    assert error.idempotency_key == "key-1"
+
+
 def test_raw_response() -> None:
     rec = Recorder(
         [httpx.Response(200, headers={"Daapi-Request-Id": "req_raw", "Daapi-Warnings": "2"}, json=invoice_json())]

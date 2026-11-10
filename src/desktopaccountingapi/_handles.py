@@ -60,7 +60,8 @@ class RequestHandle(Generic[T]):
         """Long-polls until the request ends and returns its typed result.
 
         Raises the typed API error if the request failed, was canceled or has an unknown outcome,
-        and :class:`RequestPendingError` if it is still running after ``timeout`` seconds
+        :class:`ResultUnavailableError` (with ``recovered_object_id``) if the write was applied but
+        has no result body, and :class:`RequestPendingError` if it is still running after ``timeout`` seconds
         (default: the client's ``total_timeout``, else its ``timeout``) or a poll fails.
         """
         if self._value is not _UNSET:
@@ -78,6 +79,7 @@ class RequestHandle(Generic[T]):
 
     def result(self) -> T:
         """Checks the request once: the typed result if it succeeded, the typed error if it failed,
+        :class:`ResultUnavailableError` if the write was applied but has no result body,
         :class:`RequestPendingError` while it is still running."""
         if self._value is not _UNSET:
             return cast(T, self._value)

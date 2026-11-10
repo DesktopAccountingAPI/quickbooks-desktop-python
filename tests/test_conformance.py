@@ -42,6 +42,7 @@ CANONICAL_ERRORS: dict[str, type[BaseException]] = {
     "IntegrationError": daapi.IntegrationError,
     "OutcomeUnknownError": daapi.OutcomeUnknownError,
     "InternalError": daapi.InternalError,
+    "ResultUnavailableError": daapi.ResultUnavailableError,
     "CursorExpiredError": daapi.CursorExpiredError,
     "RequestPendingError": daapi.RequestPendingError,
     "ApiConnectionError": daapi.APIConnectionError,
@@ -357,6 +358,8 @@ def _error_fields(error: BaseException) -> dict[str, Any]:
             lastId=error.last_id,
             lastUpdatedAt=error.last_updated_at,
         )
+    if isinstance(error, daapi.ResultUnavailableError):
+        fields["recoveredObjectId"] = error.recovered_object_id
     if isinstance(error, daapi.RequestPendingError):
         fields["requestId"] = error.request_id
         fields["timeoutErrorCode"] = error.timeout_error.code if error.timeout_error is not None else None

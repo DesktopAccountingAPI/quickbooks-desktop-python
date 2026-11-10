@@ -11,16 +11,19 @@ Release steps:
    ``py.typed``).
 3. The wheel is installed into a fresh virtual environment and ``scripts/smoke.py`` runs against it.
 4. ``--dry-run`` stops here and lists what would be uploaded. No network writes.
-5. If PyPI already has this version, the upload is skipped (re-runs only do what is missing).
+5. Files PyPI already serves for this version are not uploaded again: a re-run after a partial
+   upload sends only the missing sdist or wheel.
 6. ``uv publish`` uploads with ``PYPI_API_TOKEN`` (passed as ``UV_PUBLISH_TOKEN`` in the
    environment, never on the command line) or, without a token, PyPI trusted publishing (OIDC).
-7. Waits until ``https://pypi.org/pypi/<name>/<version>/json`` answers, then installs that version
-   from PyPI into a clean virtual environment and runs the smoke program again.
+7. Waits until ``https://pypi.org/pypi/<name>/<version>/json`` lists both the sdist and the wheel,
+   then installs that version from PyPI into a clean virtual environment and runs the smoke program
+   again.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -112,15 +115,23 @@ def smoke(install: list[str], version: str) -> None:
         run([str(venv_python(venv)), "smoke.py", version], cwd=work)
 
 
-def published(name: str, version: str) -> bool:
+def served(name: str, version: str) -> set[str]:
+    """The file names PyPI serves for this version (empty when the version does not exist)."""
     url = f"https://pypi.org/pypi/{name}/{version}/json"
     try:
         with urllib.request.urlopen(url, timeout=30) as response:
-            return bool(response.status == 200)
+            data = json.load(response)
     except urllib.error.HTTPError as error:
         if error.code == 404:
-            return False
+            return set()
         raise
+    return {str(f["filename"]) for f in data.get("urls", [])}
+
+
+def missing(name: str, version: str, files: list[Path]) -> list[Path]:
+    """The release files PyPI does not serve yet; the release is complete when this is empty."""
+    have = served(name, version)
+    return [f for f in files if f.name not in have]
 
 
 def upload(files: list[Path]) -> None:
@@ -136,12 +147,13 @@ def upload(files: list[Path]) -> None:
     run([*args, *[str(f) for f in files]], env=env)
 
 
-def wait_until_installable(name: str, version: str) -> None:
+def wait_until_installable(name: str, version: str, files: list[Path]) -> None:
     deadline = time.monotonic() + POLL_TIMEOUT_SECONDS
-    while not published(name, version):
+    while absent := missing(name, version, files):
+        names = ", ".join(f.name for f in absent)
         if time.monotonic() > deadline:
-            raise SystemExit(f"{name} {version} did not appear on PyPI within {POLL_TIMEOUT_SECONDS} s")
-        log(f"Waiting for {name} {version} on PyPI...")
+            raise SystemExit(f"PyPI did not serve {names} for {name} {version} within {POLL_TIMEOUT_SECONDS} s")
+        log(f"Waiting for PyPI to serve {names}...")
         time.sleep(POLL_INTERVAL_SECONDS)
     log(f"{name} {version} is on PyPI: https://pypi.org/project/{name}/{version}/")
     while True:
@@ -179,11 +191,14 @@ def main() -> None:
         log(f"to https://pypi.org/project/{name}/ as version {version}.")
         return
 
-    if published(name, version):
-        log(f"{name} {version} is already on PyPI; skipping the upload.")
+    absent = missing(name, version, files)
+    if not absent:
+        log(f"PyPI already serves every file of {name} {version}; skipping the upload.")
     else:
-        upload(files)
-    wait_until_installable(name, version)
+        if len(absent) < len(files):
+            log(f"PyPI serves part of {name} {version}; uploading only {', '.join(f.name for f in absent)}.")
+        upload(absent)
+    wait_until_installable(name, version, files)
     log(f"Released {name} {version}.")
 
 

@@ -40,6 +40,7 @@ from ._errors import (
     PermissionDeniedError,
     RateLimitError,
     RequestPendingError,
+    ResultUnavailableError,
     UnprocessableEntityError,
     WebhookVerificationError,
 )
@@ -96,6 +97,7 @@ __all__ = [
     "RawResponse",
     "RequestHandle",
     "RequestPendingError",
+    "ResultUnavailableError",
     "UnprocessableEntityError",
     "WebhookEvent",
     "WebhookVerificationError",

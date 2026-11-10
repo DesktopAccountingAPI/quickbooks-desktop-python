@@ -48,6 +48,7 @@ __all__ = [
     "PermissionDeniedError",
     "RateLimitError",
     "RequestPendingError",
+    "ResultUnavailableError",
     "UnprocessableEntityError",
     "WebhookVerificationError",
 ]
@@ -255,6 +256,35 @@ class InternalError(APIError):
     """``INTERNAL_ERROR``: a problem on the Desktop Accounting API side."""
 
 
+class ResultUnavailableError(InternalError):
+    """The result is no longer available.
+
+    For a write that was applied (``outcome`` ``applied``), never send it again: read the object
+    instead, by ``recovered_object_id`` when it is set (the platform recovered the write after a lost
+    acknowledgement), or by your ``externalId`` or ``refNumber``. For a read (``outcome``
+    ``not_applicable``), it is safe to send the read again. Raised for a recovered write (``result``
+    null) and for ``500 INTERNAL_ERROR`` with ``details["reason"]`` ``result_unavailable``. Never
+    retried automatically. It is an ``InternalError`` because the API classifies it as
+    ``INTERNAL_ERROR``.
+    """
+
+    recovered_object_id: Optional[str]
+    """QuickBooks ID of the object the write created or changed (``details["recoveredObjectId"]``),
+    or ``None`` when the API did not name one."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status: Optional[int],
+        headers: Optional[httpx.Headers] = None,
+        error: Optional[Mapping[str, Any]] = None,
+        body: Any = None,
+    ) -> None:
+        super().__init__(message, status=status, headers=headers, error=error, body=body)
+        self.recovered_object_id = _str_or_none(self.details.get("recoveredObjectId")) or None
+
+
 CursorExpiredReason = Union[Literal["idle_timeout", "session_ended", "quickbooks_restarted", "evicted"], str]
 """Why a cursor expired (``details.reason``): the QuickBooks iterator was idle too long, its Web Connector
 session ended, QuickBooks restarted, or a newer cursor list evicted it. A value added later arrives as a string."""
@@ -411,6 +441,9 @@ def error_from_object(
     cls: type[APIError] = _BY_TYPE.get(err_type, APIError) if isinstance(err_type, str) else APIError
     if error.get("code") == "CURSOR_EXPIRED" and cls is InvalidRequestError:
         cls = CursorExpiredError
+    details = error.get("details")
+    if cls is InternalError and isinstance(details, Mapping) and details.get("reason") == "result_unavailable":
+        cls = ResultUnavailableError
     message = error.get("message")
     text = message if isinstance(message, str) and message else f"HTTP {status} error"
     return _with_status(cls, status)(text, status=status, headers=headers, error=error, body=body)
