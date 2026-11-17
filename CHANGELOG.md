@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.11.1 (2026-11-17)
+
+- Released in lockstep with the other Desktop Accounting API packages; no entries for this package.
+
 ## 0.11.0 (2026-11-10)
 
 - A write whose outcome was unknown and that the platform later recovered (request `succeeded`, `outcome` `applied`, `recovered: true`, `result` null, `recovered_object_id` set) raises the new `ResultUnavailableError` from `RequestHandle.wait()`, `RequestHandle.result()` (and their async versions) and the long poll after `504 QBD_REQUEST_TIMEOUT`. They raised `AttributeError` while parsing the missing result. The error is an `InternalError` with `request_id`, `outcome` `applied`, `retryable` False and `recovered_object_id`; retrieve the object by that ID and do not send the write again. This holds also when the result is past retention (`resultExpired` true).
