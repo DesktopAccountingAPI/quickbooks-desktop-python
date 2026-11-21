@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.12.0 (2026-11-21)
+
+- `IntegrationConnection` (in `EndUser.integration_connections`) and `EndUserConnection` (from `client.end_users.retrieve_connection()` and the disable and enable calls) have `simulated` (`bool`): `True` for the hosted sample company, which answers from recordings of real QuickBooks Desktop; `False` for a company file connected through the Web Connector.
+- New error code `SAMPLE_COMPANY_UNSUPPORTED` (422, not retryable, outcome `not_applied`), raised as `InvalidRequestError`: the sample company has no recorded answer for this request. `details["reason"]` says why, `details["element"]` names the qbXML element, and `details["detail"]` says what works, when the request has a working alternative. The message often says what works. Nothing changes. Do not retry it.
+- Documentation corrections, no behavior change: on `Bill`, `open_amount` is the vendor's open balance as QuickBooks returns it (the same on every bill from that vendor), and `amount_due` is the bill's total, which stays the same as payments are applied (`is_paid` says whether it is paid). On customers, vendors, accounts and items, `updated_after` and `updated_before` match a record when its last edit or its last change falls in the range, so `updated_before` can return records whose `updated_at` is later; on inventory items QuickBooks compares the last edit only, so a quantity-on-hand change from a posted transaction does not match `updated_after`.
+
 ## 0.11.1 (2026-11-17)
 
 - Released in lockstep with the other Desktop Accounting API packages; no entries for this package.
