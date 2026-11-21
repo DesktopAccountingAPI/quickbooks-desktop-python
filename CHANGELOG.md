@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.12.1 (2026-11-21)
+
+- Documentation and error text, no behavior change: on every QuickBooks list, the descriptions of `updatedAfter` and `updatedBefore` (1970-01-02 to 2037-12-31), `transactionDateFrom` (up to 2037-12-31) and `transactionDateTo` (from 1970-01-01) state these limits and that the start must not be after the end. A date filter QuickBooks Desktop refuses (status 3020 or 3030) still returns `422 QBD_REQUEST_ERROR`. When the filters sent explain the refusal, the message names the filter and its limit, `param` names the filter and `details.reason` is `date_range_inverted` or `date_out_of_range`; otherwise the message is QuickBooks' own, with `details.reason` `date_filter_rejected` when one of these filters was sent. See the API changelog.
+
 ## 0.12.0 (2026-11-21)
 
 - `IntegrationConnection` (in `EndUser.integration_connections`) and `EndUserConnection` (from `client.end_users.retrieve_connection()` and the disable and enable calls) have `simulated` (`bool`): `True` for the hosted sample company, which answers from recordings of real QuickBooks Desktop; `False` for a company file connected through the Web Connector.
