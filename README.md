@@ -15,12 +15,12 @@ The Python client for [Desktop Accounting API](https://www.desktopaccountingapi.
 pip install desktopaccountingapi-quickbooks-desktop
 ```
 
-The current version is **0.12.1**. To pin it exactly:
+The current version is **0.12.2**. To pin it exactly:
 
 ```sh
-pip install "desktopaccountingapi-quickbooks-desktop==0.12.1"
-uv add "desktopaccountingapi-quickbooks-desktop==0.12.1"
-poetry add "desktopaccountingapi-quickbooks-desktop==0.12.1"
+pip install "desktopaccountingapi-quickbooks-desktop==0.12.2"
+uv add "desktopaccountingapi-quickbooks-desktop==0.12.2"
+poetry add "desktopaccountingapi-quickbooks-desktop==0.12.2"
 ```
 
 The distribution is `desktopaccountingapi-quickbooks-desktop`; the import package is `desktopaccountingapi`.
@@ -203,8 +203,11 @@ Every class and field is listed in [Errors](#errors). The [error catalog](https:
 QuickBooks only processes requests while the end user's Web Connector is running. `enqueue` queues a request and returns at once with a handle; the API also sends a `request.succeeded` or `request.failed` webhook when it finishes:
 
 ```python
+import datetime
+
 handle = client.qbd.invoices.enqueue.create(
     customer_id="80000001-1700000000",
+    transaction_date=datetime.date(2026, 10, 5),
     queue_ttl=3600,
     idempotency_key="order-8813-invoice",
 )
@@ -387,10 +390,16 @@ It never retries when `Daapi-Should-Retry` is `false`, when the error's `outcome
 If the API answers `504 QBD_REQUEST_TIMEOUT` because the request was sent to QuickBooks but has not finished, the SDK does not send it again. It long-polls `GET /v1/requests/{id}` until the request finishes or the call's deadline (`total_timeout`, else `timeout`) ends, then returns the typed result, raises the request's typed error, or raises `RequestPendingError` with `request_id` (and the last `request` snapshot). It also raises `RequestPendingError`, never the poll's own error, when a poll fails (`429`, `5xx`, `404`, network): that error says nothing about the write. `error.timeout_error` is the original 504 (with `details["diagnosis"]`) and `error.idempotency_key` the key the write was sent with; resend only with that key. Check the request later:
 
 ```python
+import datetime
+
 from desktopaccountingapi import RequestPendingError
 
 try:
-    client.qbd.invoices.create(customer_id="80000001-1700000000", idempotency_key="order-8814-invoice")
+    client.qbd.invoices.create(
+        customer_id="80000001-1700000000",
+        transaction_date=datetime.date(2026, 10, 5),
+        idempotency_key="order-8814-invoice",
+    )
 except RequestPendingError as error:
     request = client.requests.retrieve(error.request_id)
     print(request.status)  # still "queued" or "running"; a webhook reports the result
@@ -401,7 +410,11 @@ except RequestPendingError as error:
 Operations that run through the QuickBooks queue can be started in async mode (`Prefer: respond-async`). They return at once with a request handle:
 
 ```python
-handle = client.qbd.invoices.enqueue.create(customer_id="80000001-1700000000", queue_ttl=3600)
+import datetime
+
+handle = client.qbd.invoices.enqueue.create(
+    customer_id="80000001-1700000000", transaction_date=datetime.date(2026, 10, 5), queue_ttl=3600
+)
 print(handle.id)  # req_...; the request is queued
 invoice = handle.wait(timeout=600)  # long-polls; returns an Invoice or raises its typed error
 current = handle.status()  # current Request, no waiting
@@ -535,7 +548,7 @@ The [migration guide](https://www.desktopaccountingapi.com/docs/get-started/migr
 
 The toolchain is pinned in `mise.toml`. `mise run check` installs the pinned dev tools with uv and runs ruff, `mypy --strict`, the unit tests, the cross-language conformance suite (against `conformance/mock-server.mjs`), the example type checks, the README samples (`mypy --strict` on every Python block of this file, and the quickstart against the mock server) and a build plus clean install of the wheel. Set `UV_PYTHON=3.9` (or any supported version) to run it on another interpreter.
 
-To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.12.1"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
+To install from source: `pip install "git+https://github.com/DesktopAccountingAPI/quickbooks-desktop-python.git@v0.12.2"`. The code under `src/desktopaccountingapi/types` and `src/desktopaccountingapi/resources`, `api.md`, `conformance/fixtures` and this README are generated; see [CONTRIBUTING.md](https://github.com/DesktopAccountingAPI/quickbooks-desktop-python/blob/main/CONTRIBUTING.md).
 
 ## License
 
